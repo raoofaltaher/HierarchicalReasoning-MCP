@@ -32,33 +32,37 @@ The HRM-MCP translates the breakthrough insights from the Hierarchical Reasoning
 This section reflects the *actual* code present in `src/HRM` today (lean bootstrap implementation) versus the original expansive design that follows below (which now serves as an "Aspirational / Historical Plan").
 
 ### 📌 What’s Implemented Now
+
 | Area | Status | Notes |
 |------|--------|-------|
-| Core MCP server (`index.ts`) | Implemented | Registers tools manually (schema duplicated). |
+| Core MCP server (`index.ts`) | Implemented | Tool schema generated from Zod; stdio transport + trace metadata wiring. |
 | Hierarchical engine (`engine.ts`) | Implemented | Auto reasoning loop with bounded iterations + halting. |
-| Operations (`operations/highLevel.ts`, `lowLevel.ts`, `evaluation.ts`) | Implemented | Deterministic handlers for H/L cycles + evaluation + halt check. |
-| State management (`state.ts`) | Implemented | In‑memory only; no TTL / persistence. |
+| Operations (`operations/highLevel.ts`, `lowLevel.ts`, `evaluation.ts`) | Implemented | Deterministic handlers for H/L cycles + evaluation + halt check (with trigger return). |
+| State management (`state.ts`) | Implemented | In‑memory sessions with configurable TTL eviction; no persistence yet. |
 | Metrics (`utils/metrics.ts`) | Implemented | Heuristic confidence + convergence (density/diversity/candidate strength). |
 | Suggestions (`utils/suggestions.ts`) | Implemented | Next operation selection + plateau detection gate. |
-| Plateau / halting logic | Implemented (basic) | Confidence threshold + plateau window + max steps cap. |
+| Plateau / halting logic | Implemented (basic) | Confidence + convergence thresholds, plateau window, halt trigger rationale. |
+| Auto reasoning trace | Implemented | Structured trace array capturing H/L cycles, metrics, rationale. |
 | Framework detection | Basic | React, Next.js, Express, Prisma, PostgreSQL detectors + specialists. |
 | Framework enrichment | Implemented | Injects reasoning guidance hints. |
 | Logging (`utils/logging.ts`) | Basic | Console w/ env flag. |
 | Text utilities (`utils/text.ts`) | Implemented | Normalization and context summarization. |
 | Dockerfile | Present | Minimal runtime container. |
-| Tests | Not started | No unit / integration coverage yet. |
+| Tests | In progress | Vitest suite covering TTL eviction, halt triggers, duplicate guard. |
 | Persistence / embeddings | Not started | Planned abstractions only (not coded). |
 
 ### 🧭 Phase Completion vs Original Plan
+
 | Original Phase | Planned Scope | Actual Status |
 |----------------|--------------|---------------|
 | Phase 1 – Core Infrastructure | Server scaffold, ops, state | ✅ Complete |
 | Phase 2 – Hierarchical Logic | Cycle logic, convergence heuristics | ✅ Complete (heuristic only) |
 | Phase 3 – Adaptive Features | Advanced stagnation, branching, dynamic thresholds | ⚠️ Partial (plateau heuristic only) |
-| Phase 4 – Integration & Polish | Tests, docs, examples, optimization | ⏳ Not started (docs partially updated) |
+| Phase 4 – Integration & Polish | Tests, docs, examples, optimization | 🟡 In progress (unit tests + docs refresh) |
 | Phase 5+ – Advanced / Research | Embeddings, semantic convergence, persistence, pattern learning | ❌ Not started |
 
 ### 🔍 Key Deltas from Aspirational Specification
+
 | Specification Element (Below) | Current Reality | Action Needed |
 |-------------------------------|-----------------|---------------|
 | Rich modular server folder structure (`server/`, `convergence/`, `domain/`, etc.) | Collapsed minimalist single-package layout | Defer restructure until tests + persistence added |
@@ -71,32 +75,33 @@ This section reflects the *actual* code present in `src/HRM` today (lean bootstr
 | Workspace analysis (AST / git) | Not implemented | Gate behind optional feature flag later |
 
 ### 🎯 Immediate Priority Improvement Roadmap (Implementation Order)
-1. Testing Baseline
-  - Add Jest setup + unit tests for metrics, suggestions, plateau logic, framework detection.
-  - Add one integration test: multi-step `auto_reason` reaching halt condition.
-2. Session TTL & Eviction
-  - Add configurable inactivity timeout (e.g. 15m default) in `SessionManager`.
-3. Trace Structuring
-  - Add `trace: { step: number; op: string; h_cycle: number; l_cycle: number; note: string }[]` to responses (esp. `auto_reason`).
-4. Duplicate Low-Level Thought Guard
-  - Hash last N (e.g. 5) L-thoughts to avoid redundant accumulation.
-5. Halting Rationale Field
-  - Explicit `halt_trigger: 'confidence' | 'plateau' | 'max_steps' | 'convergence'` in final response.
-6. Schema DRY Refactor
-  - Generate tool schema from Zod instead of manual duplication in `index.ts`.
-7. Documentation Delta
-  - Add README section: “Using Hierarchical Operations” with example request/response trace.
+
+- **Test Expansion**
+  - Extend Vitest coverage to metrics heuristics, suggestions routing, framework detectors.
+  - Add integration test: multi-step `auto_reason` reaching halt condition with trace assertions.
+- **Observability Docs**
+  - Document trace + halt trigger fields in README and usage samples.
+- **Coverage & CI**
+  - Enable coverage thresholds and add CI gate for vitest run.
+- **Framework Intelligence**
+  - Improve detector confidence aggregation (boundary-aware keyword filters, stack profile summary).
+- **Persistence Prep**
+  - Define `PersistenceAdapter` interface and memory implementation scaffold post-tests.
 
 ### 🧪 Test Coverage Targets (Initial Pass)
-| Component | Tests |
-|-----------|-------|
-| metrics.computeReasoningMetrics | Edge cases (empty contexts, large candidate list) |
-| suggestions.suggestNextOperation | Operation sequencing under varying cycle counts |
-| plateau detection (evaluation) | Detect plateau vs non‑plateau sequences |
-| framework detectors | Confidence thresholds & multi-hit aggregation |
-| engine auto loop | Halting at plateau + confidence threshold path |
+
+| Component | Status | Next Steps |
+|-----------|--------|------------|
+| SessionManager TTL | ✅ Covered | Expand to multi-session eviction scenarios |
+| Halt check triggers | ✅ Covered | Add plateau regression + rationale snapshot tests |
+| Low-level duplicate guard | ✅ Covered | Include mixed-case and whitespace fuzzing |
+| metrics.computeReasoningMetrics | ⏳ Pending | Add edge cases (empty contexts, large candidate list) |
+| suggestions.suggestNextOperation | ⏳ Pending | Verify sequencing under varying cycle counts |
+| framework detectors | ⏳ Pending | Confidence thresholds & multi-hit aggregation |
+| engine auto loop | ⏳ Pending | Simulate halt at plateau + confidence threshold path |
 
 ### 🧩 Near-Term Abstractions (Pre-Embedding)
+
 | Abstraction | Purpose | Milestone |
 |-------------|---------|-----------|
 | SimilarityScorer interface | Future semantic swap without churn | After tests |
@@ -104,12 +109,14 @@ This section reflects the *actual* code present in `src/HRM` today (lean bootstr
 | HaltingStrategy (optional) | Domain-specific halt logic | After baseline metrics history |
 
 ### 🪜 Incremental Embedding Path (Do NOT Jump Ahead)
+
 1. Record metric history arrays (confidence, convergence, plateau flags) in state.
 2. Add similarity interface returning dummy constant to unblock API.
 3. Implement simple token overlap similarity (placeholder) before external provider.
 4. Only then add actual embedding provider plug (OpenAI/local) behind feature flag.
 
 ### 🚦 Risk Register (Top 5)
+
 | Risk | Impact | Mitigation |
 |------|--------|-----------|
 | Scope creep from aspirational spec | Delay core stability | Constrain to Immediate roadmap until tests land |
@@ -119,6 +126,7 @@ This section reflects the *actual* code present in `src/HRM` today (lean bootstr
 | Ambiguous halting rationale | Hard to debug loops | Add explicit `halt_trigger` + trace entries |
 
 ### 🧾 Decision Log (Recent Additions)
+
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2025-09-28 | Preserve minimalist layout for now | Faster iteration until tests establish safety net |
@@ -126,16 +134,18 @@ This section reflects the *actual* code present in `src/HRM` today (lean bootstr
 | 2025-09-28 | Implement TTL prior to persistence adapter | Reduces wasted future persistence writes |
 
 ### 🛠️ Selected Quick Wins (Scheduled Next Sprint)
+
 | Quick Win | Effort | Value |
 |-----------|--------|-------|
-| Session TTL eviction | S | Prevent memory leakage over long use |
-| Structured trace array | S | Improves debuggability & UI integration |
-| Zod-driven tool schema generation | S | Eliminates duplication, lowers drift risk |
-| Duplicate L-thought suppression | XS | Reduces noise, aids convergence clarity |
-| Halting rationale field | XS | Transparent termination diagnostics |
+| Metrics coverage tests | S | Safeguard heuristic refinements |
+| Detector boundary filters | S | Reduce false positives in framework enrichment |
+| CLI trace dump utility | XS | Faster debugging of reasoning sessions |
+| README trace walkthrough | XS | Improves discoverability and onboarding |
 
-### 🔄 Response Contract (Target Post-Trace Update)
-Augmented `HRMResponse` fields to introduce soon:
+### 🔄 Response Contract (Current)
+
+`HRMResponse` already exposes trace + halt triggers:
+
 ```ts
 interface HRMResponse {
   // existing fields ...
@@ -146,7 +156,7 @@ interface HRMResponse {
    l_cycle: number;
    note: string;
   }>;
-  halt_trigger?: 'confidence' | 'plateau' | 'max_steps' | 'convergence';
+  halt_trigger?: 'confidence_convergence' | 'plateau' | 'max_steps';
 }
 ```
 

@@ -31,6 +31,19 @@ export class HierarchicalReasoningEngine {
   private frameworkManager = new FrameworkReasoningManager();
 
   async handleRequest(params: HRMParameters): Promise<HRMResponse> {
+    // Apply environment variable defaults if corresponding fields are absent in request.
+    // These do not override explicit user-provided parameters.
+    // Planned vars: HRM_CONFIDENCE_THRESHOLD, HRM_CONVERGENCE_THRESHOLD, HRM_MAX_AUTO_STEPS (last not yet wired into constant loop cap).
+    if (params.convergence_threshold === undefined) {
+      const envConv = process.env.HRM_CONVERGENCE_THRESHOLD || process.env.HRM_CONFIDENCE_THRESHOLD; // allow alias
+      if (envConv) {
+        const n = Number(envConv);
+        if (Number.isFinite(n) && n >= 0.5 && n <= 0.99) {
+          params.convergence_threshold = n;
+        }
+      }
+    }
+
     let session = this.sessions.getOrCreate(params);
     if (params.reset_state) {
       log("info", "Session reset requested", { sessionId: session.sessionId });
