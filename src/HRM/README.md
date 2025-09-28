@@ -1,29 +1,33 @@
-# My-MCP: [Descriptive Title]
+# Hierarchical Reasoning MCP Server
 
-This is an experimental implementation of a new Model Context Protocol (MCP) server based on:
+The Hierarchical Reasoning MCP server implements a neuroscience-inspired dual-layer reasoning model for Model Context Protocol tooling. It separates strategic planning (H-level) and tactical execution (L-level), adapts reasoning depth to task complexity, and provides convergence metrics to guide halting decisions.
 
+## Features
+
+- Hierarchical operations: `h_plan`, `l_execute`, `h_update`, `evaluate`, `halt_check`, and `auto_reason`
+- Persistent session state with configurable convergence thresholds and cycle budgets
+- Adaptive metrics (confidence, convergence, complexity) powering halting guidance
+- Auto-reasoning mode that loops through hierarchical cycles with trace export
+- Framework-aware reasoning via optional `workspace_path` input (React/Next.js heuristics, specialized patterns)
+- JSON-schema validated inputs backed by Zod runtime parsing
+
+## Usage
+
+```bash
+npm install
+npm run build
+npx mcp-server-hierarchical-reasoning
 ```
-@misc{wang2025hierarchicalreasoningmodel,
-      title={Hierarchical Reasoning Model}, 
-      author={Guan Wang and Jin Li and Yuhao Sun and Xing Chen and Changling Liu and Yue Wu and Meng Lu and Sen Song and Yasin Abbasi Yadkori},
-      year={2025},
-      eprint={2506.21734},
-      archivePrefix={arXiv},
-      primaryClass={cs.AI},
-      url={https://arxiv.org/abs/2506.21734}, 
-}
-```
 
-## Purpose
+Once running, the server exposes a single MCP tool named  `hierarchicalreasoning`. Provide an `operation` value and optionally supply cycle counters (`h_cycle`, `l_cycle`), thoughts, and candidate solutions to guide reasoning. Set `workspace_path` when you want framework detection (React/Next.js/Express/Prisma today). The server persists session state whenever a `session_id` is supplied. 
 
-The server implements hierarchical reasoning, and is intended to be compatible with the official MCP spec.
+## Development
 
-## Status
-
-- ✅ Research-backed implementation
-- ⚠️ Experimental; under active development
-- 🛠️ Targeted for upstream contribution to [`modelcontextprotocol/servers`](https://github.com/modelcontextprotocol/servers)
+- `npm run build` compiles TypeScript to `dist/`
+- `npm run watch` starts the TypeScript compiler in watch mode
+- Set `HRM_DEBUG=true` to enable verbose logging
 
 ## License
 
-MIT (inherited from upstream) — subject to change based on upstream acceptance and contributions. with rights reserved for the original authors.
+MIT
+
