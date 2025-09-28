@@ -6,6 +6,7 @@ export const DEFAULT_CONVERGENCE_THRESHOLD = 0.85;
 export const DEFAULT_COMPLEXITY_ESTIMATE = 5;
 export const MAX_RECENT_DECISIONS = 12;
 export const MAX_PENDING_ACTIONS = 6;
+export const DEFAULT_SESSION_TTL_MS = 15 * 60 * 1000;
 
 export const OPERATION_PRIORITIES: Record<HRMOperation, number> = {
   h_plan: 1,

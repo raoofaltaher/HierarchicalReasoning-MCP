@@ -7,7 +7,20 @@ import {
   ListToolsRequestSchema,
   Tool,
 } from "@modelcontextprotocol/sdk/types.js";
-import { ZodError } from "zod";
+import {
+  ZodArray,
+  ZodBoolean,
+  ZodDefault,
+  ZodEffects,
+  ZodEnum,
+  ZodError,
+  ZodFirstPartyTypeKind,
+  ZodNumber,
+  ZodObject,
+  ZodOptional,
+  ZodString,
+  type ZodTypeAny,
+} from "zod";
 
 import { HierarchicalReasoningEngine } from "./engine.js";
 import { HRMParametersSchema } from "./types.js";
@@ -15,94 +28,132 @@ import { log } from "./utils/logging.js";
 
 const engine = new HierarchicalReasoningEngine();
 
+type ToolInputSchema = Tool["inputSchema"];
+type JsonSchema = Record<string, unknown>;
+
+const unwrapEffects = (schema: ZodTypeAny): ZodTypeAny => {
+  if (schema instanceof ZodEffects) {
+    return unwrapEffects(schema._def.schema);
+  }
+  return schema;
+};
+
+const toJsonSchema = (schema: ZodTypeAny): { schema: JsonSchema; optional: boolean } => {
+  const unwrapped = unwrapEffects(schema);
+  if (unwrapped instanceof ZodOptional) {
+    const inner = toJsonSchema(unwrapped.unwrap());
+    return { schema: inner.schema, optional: true };
+  }
+  if (unwrapped instanceof ZodDefault) {
+    const inner = toJsonSchema(unwrapped._def.innerType);
+    const defaultValue = unwrapped._def.defaultValue();
+    if (defaultValue !== undefined) {
+      inner.schema = { ...inner.schema, default: defaultValue };
+    }
+    return { schema: inner.schema, optional: true };
+  }
+
+  switch (unwrapped._def.typeName) {
+    case ZodFirstPartyTypeKind.ZodString: {
+      const json: JsonSchema = { type: "string" };
+      for (const check of (unwrapped as ZodString)._def.checks) {
+        if (check.kind === "uuid") {
+          json.format = "uuid";
+        }
+        if (check.kind === "min") {
+          json.minLength = check.value;
+        }
+        if (check.kind === "max") {
+          json.maxLength = check.value;
+        }
+      }
+      return { schema: json, optional: false };
+    }
+    case ZodFirstPartyTypeKind.ZodNumber: {
+      const json: JsonSchema = { type: "number" };
+      for (const check of (unwrapped as ZodNumber)._def.checks) {
+        switch (check.kind) {
+          case "int":
+            json.type = "integer";
+            break;
+          case "min":
+            if (check.inclusive) {
+              json.minimum = check.value;
+            } else {
+              json.exclusiveMinimum = check.value;
+            }
+            break;
+          case "max":
+            if (check.inclusive) {
+              json.maximum = check.value;
+            } else {
+              json.exclusiveMaximum = check.value;
+            }
+            break;
+          case "multipleOf":
+            json.multipleOf = check.value;
+            break;
+        }
+      }
+      return { schema: json, optional: false };
+    }
+    case ZodFirstPartyTypeKind.ZodBoolean:
+      return { schema: { type: "boolean" }, optional: false };
+    case ZodFirstPartyTypeKind.ZodEnum:
+      return {
+        schema: { type: "string", enum: [...(unwrapped as ZodEnum<[string, ...string[]]>)._def.values] },
+        optional: false,
+      };
+    case ZodFirstPartyTypeKind.ZodArray: {
+      const arrayType = (unwrapped as ZodArray<any>)._def.type;
+      const inner = toJsonSchema(arrayType);
+      return { schema: { type: "array", items: inner.schema }, optional: false };
+    }
+    case ZodFirstPartyTypeKind.ZodObject: {
+      return { schema: buildObjectSchema(unwrapped as ZodObject<any>), optional: false };
+    }
+    default:
+      return { schema: {}, optional: false };
+  }
+};
+
+const buildObjectSchema = (schema: ZodObject<any>): JsonSchema => {
+  const shape = schema.shape;
+  const properties: Record<string, JsonSchema> = {};
+  const required: string[] = [];
+  for (const [key, value] of Object.entries(shape)) {
+    const { schema: propSchema, optional } = toJsonSchema(value as ZodTypeAny);
+    properties[key] = propSchema;
+    if (!optional) {
+      required.push(key);
+    }
+  }
+  const result: JsonSchema = {
+    type: "object",
+    properties,
+    additionalProperties: false,
+  };
+  if (required.length) {
+    result.required = required;
+  }
+  return result;
+};
+
+const { schema: topLevelSchema } = toJsonSchema(HRMParametersSchema);
+if (!topLevelSchema || topLevelSchema.type !== "object") {
+  throw new Error("HRMParametersSchema must resolve to an object JSON schema.");
+}
+const hrmInputSchema = {
+  $schema: "http://json-schema.org/draft-07/schema#",
+  title: "HRMParameters",
+  ...(topLevelSchema as Record<string, unknown>),
+};
+const HRM_INPUT_SCHEMA = hrmInputSchema as unknown as ToolInputSchema;
+
 const HRM_TOOL: Tool = {
   name: "hierarchicalreasoning",
   description: "Neuroscience-inspired hierarchical reasoning engine with adaptive cycles and convergence feedback.",
-  inputSchema: {
-    type: "object",
-    properties: {
-      operation: {
-        type: "string",
-        enum: ["h_plan", "l_execute", "h_update", "evaluate", "halt_check", "auto_reason"],
-        description: "The reasoning operation to execute",
-      },
-      h_thought: {
-        type: "string",
-        description: "High-level strategic thought content",
-      },
-      l_thought: {
-        type: "string",
-        description: "Low-level detailed thought content",
-      },
-      problem: {
-        type: "string",
-        description: "Problem statement used for auto reasoning mode",
-      },
-      h_cycle: {
-        type: "integer",
-        minimum: 0,
-        description: "Current high-level cycle index",
-      },
-      l_cycle: {
-        type: "integer",
-        minimum: 0,
-        description: "Current low-level cycle index",
-      },
-      max_l_cycles_per_h: {
-        type: "integer",
-        minimum: 1,
-        maximum: 20,
-        description: "Maximum low-level cycles per high-level cycle",
-      },
-      max_h_cycles: {
-        type: "integer",
-        minimum: 1,
-        maximum: 20,
-        description: "Maximum high-level cycles",
-      },
-      confidence_score: {
-        type: "number",
-        minimum: 0,
-        maximum: 1,
-        description: "Manual confidence override for evaluation",
-      },
-      complexity_estimate: {
-        type: "number",
-        minimum: 1,
-        maximum: 10,
-        description: "Problem complexity estimate",
-      },
-      convergence_threshold: {
-        type: "number",
-        minimum: 0.5,
-        maximum: 0.99,
-        description: "Required convergence score for halting",
-      },
-      h_context: {
-        type: "string",
-        description: "Persisted high-level context snapshot",
-      },
-      l_context: {
-        type: "string",
-        description: "Persisted low-level context snapshot",
-      },
-      solution_candidates: {
-        type: "array",
-        items: { type: "string" },
-        description: "Candidate solution list",
-      },
-      session_id: {
-        type: "string",
-        description: "Session identifier for state persistence",
-      },
-      reset_state: {
-        type: "boolean",
-        description: "Reset server-side session state",
-      },
-    },
-    required: ["operation"],
-    additionalProperties: false,
-  },
+  inputSchema: HRM_INPUT_SCHEMA,
 };
 
 const server = new Server(

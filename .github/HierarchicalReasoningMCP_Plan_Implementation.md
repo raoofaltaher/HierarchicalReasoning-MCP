@@ -27,6 +27,136 @@ The HRM-MCP translates the breakthrough insights from the Hierarchical Reasoning
 
 ---
 
+## ✅ Current Implementation Status & Roadmap (Updated 2025-09-28)
+
+This section reflects the *actual* code present in `src/HRM` today (lean bootstrap implementation) versus the original expansive design that follows below (which now serves as an "Aspirational / Historical Plan").
+
+### 📌 What’s Implemented Now
+| Area | Status | Notes |
+|------|--------|-------|
+| Core MCP server (`index.ts`) | Implemented | Registers tools manually (schema duplicated). |
+| Hierarchical engine (`engine.ts`) | Implemented | Auto reasoning loop with bounded iterations + halting. |
+| Operations (`operations/highLevel.ts`, `lowLevel.ts`, `evaluation.ts`) | Implemented | Deterministic handlers for H/L cycles + evaluation + halt check. |
+| State management (`state.ts`) | Implemented | In‑memory only; no TTL / persistence. |
+| Metrics (`utils/metrics.ts`) | Implemented | Heuristic confidence + convergence (density/diversity/candidate strength). |
+| Suggestions (`utils/suggestions.ts`) | Implemented | Next operation selection + plateau detection gate. |
+| Plateau / halting logic | Implemented (basic) | Confidence threshold + plateau window + max steps cap. |
+| Framework detection | Basic | React, Next.js, Express, Prisma, PostgreSQL detectors + specialists. |
+| Framework enrichment | Implemented | Injects reasoning guidance hints. |
+| Logging (`utils/logging.ts`) | Basic | Console w/ env flag. |
+| Text utilities (`utils/text.ts`) | Implemented | Normalization and context summarization. |
+| Dockerfile | Present | Minimal runtime container. |
+| Tests | Not started | No unit / integration coverage yet. |
+| Persistence / embeddings | Not started | Planned abstractions only (not coded). |
+
+### 🧭 Phase Completion vs Original Plan
+| Original Phase | Planned Scope | Actual Status |
+|----------------|--------------|---------------|
+| Phase 1 – Core Infrastructure | Server scaffold, ops, state | ✅ Complete |
+| Phase 2 – Hierarchical Logic | Cycle logic, convergence heuristics | ✅ Complete (heuristic only) |
+| Phase 3 – Adaptive Features | Advanced stagnation, branching, dynamic thresholds | ⚠️ Partial (plateau heuristic only) |
+| Phase 4 – Integration & Polish | Tests, docs, examples, optimization | ⏳ Not started (docs partially updated) |
+| Phase 5+ – Advanced / Research | Embeddings, semantic convergence, persistence, pattern learning | ❌ Not started |
+
+### 🔍 Key Deltas from Aspirational Specification
+| Specification Element (Below) | Current Reality | Action Needed |
+|-------------------------------|-----------------|---------------|
+| Rich modular server folder structure (`server/`, `convergence/`, `domain/`, etc.) | Collapsed minimalist single-package layout | Defer restructure until tests + persistence added |
+| Semantic similarity / embeddings | Not implemented | Introduce pluggable `SimilarityScorer` interface first |
+| Persistent sessions / DB | Not implemented | Add adapter interface + memory + (future) file or sqlite backend |
+| Advanced convergence detector (semantic matrices) | Heuristic only | Stage 1: record metric history; Stage 2: interface swap |
+| Pattern recognition & learning | Not implemented | Requires persistence + embedding layer |
+| Domain specialists (Architecture, Debugging, API) | Not implemented | Extend existing framework specialist pattern |
+| Neural confidence model | Heuristic composite | Add factor breakdown (coverage/diversity/momentum) first |
+| Workspace analysis (AST / git) | Not implemented | Gate behind optional feature flag later |
+
+### 🎯 Immediate Priority Improvement Roadmap (Implementation Order)
+1. Testing Baseline
+  - Add Jest setup + unit tests for metrics, suggestions, plateau logic, framework detection.
+  - Add one integration test: multi-step `auto_reason` reaching halt condition.
+2. Session TTL & Eviction
+  - Add configurable inactivity timeout (e.g. 15m default) in `SessionManager`.
+3. Trace Structuring
+  - Add `trace: { step: number; op: string; h_cycle: number; l_cycle: number; note: string }[]` to responses (esp. `auto_reason`).
+4. Duplicate Low-Level Thought Guard
+  - Hash last N (e.g. 5) L-thoughts to avoid redundant accumulation.
+5. Halting Rationale Field
+  - Explicit `halt_trigger: 'confidence' | 'plateau' | 'max_steps' | 'convergence'` in final response.
+6. Schema DRY Refactor
+  - Generate tool schema from Zod instead of manual duplication in `index.ts`.
+7. Documentation Delta
+  - Add README section: “Using Hierarchical Operations” with example request/response trace.
+
+### 🧪 Test Coverage Targets (Initial Pass)
+| Component | Tests |
+|-----------|-------|
+| metrics.computeReasoningMetrics | Edge cases (empty contexts, large candidate list) |
+| suggestions.suggestNextOperation | Operation sequencing under varying cycle counts |
+| plateau detection (evaluation) | Detect plateau vs non‑plateau sequences |
+| framework detectors | Confidence thresholds & multi-hit aggregation |
+| engine auto loop | Halting at plateau + confidence threshold path |
+
+### 🧩 Near-Term Abstractions (Pre-Embedding)
+| Abstraction | Purpose | Milestone |
+|-------------|---------|-----------|
+| SimilarityScorer interface | Future semantic swap without churn | After tests |
+| PersistenceAdapter interface | Pluggable memory/file/db | After TTL & trace |
+| HaltingStrategy (optional) | Domain-specific halt logic | After baseline metrics history |
+
+### 🪜 Incremental Embedding Path (Do NOT Jump Ahead)
+1. Record metric history arrays (confidence, convergence, plateau flags) in state.
+2. Add similarity interface returning dummy constant to unblock API.
+3. Implement simple token overlap similarity (placeholder) before external provider.
+4. Only then add actual embedding provider plug (OpenAI/local) behind feature flag.
+
+### 🚦 Risk Register (Top 5)
+| Risk | Impact | Mitigation |
+|------|--------|-----------|
+| Scope creep from aspirational spec | Delay core stability | Constrain to Immediate roadmap until tests land |
+| Lack of tests blocks safe refactors | Hidden regressions | Implement unit + integration first |
+| Embedding integration too early | Complexity & perf overhead | Stage via abstraction + placeholder |
+| Memory growth from unbounded sessions | Increased RAM footprint | Introduce TTL + eviction sweep |
+| Ambiguous halting rationale | Hard to debug loops | Add explicit `halt_trigger` + trace entries |
+
+### 🧾 Decision Log (Recent Additions)
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| 2025-09-28 | Preserve minimalist layout for now | Faster iteration until tests establish safety net |
+| 2025-09-28 | Add trace + halt_trigger before persistence | Improves observability early |
+| 2025-09-28 | Implement TTL prior to persistence adapter | Reduces wasted future persistence writes |
+
+### 🛠️ Selected Quick Wins (Scheduled Next Sprint)
+| Quick Win | Effort | Value |
+|-----------|--------|-------|
+| Session TTL eviction | S | Prevent memory leakage over long use |
+| Structured trace array | S | Improves debuggability & UI integration |
+| Zod-driven tool schema generation | S | Eliminates duplication, lowers drift risk |
+| Duplicate L-thought suppression | XS | Reduces noise, aids convergence clarity |
+| Halting rationale field | XS | Transparent termination diagnostics |
+
+### 🔄 Response Contract (Target Post-Trace Update)
+Augmented `HRMResponse` fields to introduce soon:
+```ts
+interface HRMResponse {
+  // existing fields ...
+  trace?: Array<{
+   step: number;
+   operation: string;
+   h_cycle: number;
+   l_cycle: number;
+   note: string;
+  }>;
+  halt_trigger?: 'confidence' | 'plateau' | 'max_steps' | 'convergence';
+}
+```
+
+### 📣 Guidance for Contributors (While Transitional)
+Keep enhancements constrained to: (a) tests, (b) observability (trace, rationale), (c) safety features (TTL), (d) schema DRY. Defer semantic / pattern / persistence complexity until those land.
+
+> The extensive sections that follow remain valuable as a long-term north star. Treat everything below this banner as forward-looking design rather than a reflection of current state.
+
+---
+
 ## 🧠 Technical Background
 
 ### HRM Research Foundation

@@ -8,6 +8,7 @@ import { handleLowLevelExecution } from "./operations/lowLevel.js";
 import { SessionManager } from "./state.js";
 import {
   AutoReasoningTraceEntry,
+  HaltTrigger,
   HRMParameters,
   HRMResponse,
   HRMResponseContent,
@@ -21,8 +22,12 @@ import {
 } from "./constants.js";
 import { FrameworkReasoningManager } from "./frameworks/index.js";
 
+const envSessionTtl = Number.parseInt(process.env.HRM_SESSION_TTL_MS ?? "", 10);
+
 export class HierarchicalReasoningEngine {
-  private sessions = new SessionManager();
+  private sessions = new SessionManager(
+    Number.isFinite(envSessionTtl) ? envSessionTtl : undefined,
+  );
   private frameworkManager = new FrameworkReasoningManager();
 
   async handleRequest(params: HRMParameters): Promise<HRMResponse> {
@@ -39,11 +44,13 @@ export class HierarchicalReasoningEngine {
         return await this.runAutoReasoning(params, session);
       }
 
-      const summary = this.performOperation(params.operation, params, session);
+      const { summary, haltTrigger } = this.performOperation(params.operation, params, session);
       this.sessions.updateState(session, params.operation, summary);
       this.refreshMetrics(session, params.operation);
       const suggestion = suggestNextOperation(session, params.operation);
-      return this.buildResponse(session, params.operation, summary, suggestion);
+      return this.buildResponse(session, params.operation, summary, suggestion, {
+        haltTrigger,
+      });
     } catch (error) {
       log("error", "Operation failed", error);
       return this.errorResponse(session, params.operation, error);
@@ -52,6 +59,8 @@ export class HierarchicalReasoningEngine {
 
   private async runAutoReasoning(params: HRMParameters, session: HierarchicalState): Promise<HRMResponse> {
     const trace: AutoReasoningTraceEntry[] = [];
+    let haltTrigger: HaltTrigger | undefined;
+    let step = 0;
     session.autoMode = true;
     if (!session.problem && params.problem) {
       session.problem = params.problem;
@@ -65,6 +74,9 @@ export class HierarchicalReasoningEngine {
 
     let lastOperation: HRMOperation = "h_plan";
     let iterations = 0;
+    const pushTrace = (entry: Omit<AutoReasoningTraceEntry, "step">) => {
+      trace.push({ step: ++step, ...entry });
+    };
     while (iterations < MAX_AUTO_REASONING_STEPS) {
       iterations += 1;
       const nextOp: HRMOperation = AUTO_REASONING_OPERATIONS.includes(lastOperation)
@@ -74,42 +86,47 @@ export class HierarchicalReasoningEngine {
       if (nextOp === "halt_check") {
         handleEvaluate(session, params);
         const haltResult = handleHaltCheck(session);
-        trace.push({
+        pushTrace({
           operation: nextOp,
           hCycle: session.hCycle,
           lCycle: session.lCycle,
-          thought: haltResult.rationale,
+          note: haltResult.rationale,
           metrics: session.metrics,
         });
         if (haltResult.shouldHalt) {
+          haltTrigger = haltResult.trigger ?? haltTrigger;
           break;
         }
         lastOperation = "evaluate";
         continue;
       }
 
-      const summary = this.performOperation(nextOp, params, session);
+      const { summary, haltTrigger: opHaltTrigger } = this.performOperation(nextOp, params, session);
       this.sessions.updateState(session, nextOp, summary);
       this.refreshMetrics(session, nextOp);
-      trace.push({
+      pushTrace({
         operation: nextOp,
         hCycle: session.hCycle,
         lCycle: session.lCycle,
-        thought: summary,
+        note: summary,
         metrics: session.metrics,
       });
+      if (opHaltTrigger) {
+        haltTrigger = opHaltTrigger;
+      }
 
       if (!session.metrics.shouldContinue && nextOp !== "evaluate") {
         handleEvaluate(session, params);
         const haltResult = handleHaltCheck(session);
-        trace.push({
+        pushTrace({
           operation: "halt_check",
           hCycle: session.hCycle,
           lCycle: session.lCycle,
-          thought: haltResult.rationale,
+          note: haltResult.rationale,
           metrics: session.metrics,
         });
         if (haltResult.shouldHalt) {
+          haltTrigger = haltResult.trigger ?? haltTrigger;
           break;
         }
       }
@@ -118,18 +135,29 @@ export class HierarchicalReasoningEngine {
     }
 
     session.autoMode = false;
+    if (!haltTrigger && iterations >= MAX_AUTO_REASONING_STEPS) {
+      haltTrigger = "max_steps";
+    }
     const finalResponse = this.buildResponse(
       session,
       "auto_reason",
       JSON.stringify(trace, null, 2),
       suggestNextOperation(session, lastOperation),
-      trace,
+      {
+        trace,
+        haltTrigger,
+      },
     );
     return finalResponse;
   }
 
-  private performOperation(operation: HRMOperation, params: HRMParameters, session: HierarchicalState) {
+  private performOperation(
+    operation: HRMOperation,
+    params: HRMParameters,
+    session: HierarchicalState,
+  ): { summary: string; haltTrigger?: HaltTrigger } {
     let summary = "";
+    let haltTrigger: HaltTrigger | undefined;
     switch (operation) {
       case "h_plan":
         summary = handleHighLevelPlan(session, params);
@@ -147,6 +175,7 @@ export class HierarchicalReasoningEngine {
       case "halt_check":
         const haltResult = handleHaltCheck(session);
         summary = haltResult.rationale;
+        haltTrigger = haltResult.trigger;
         break;
       case "auto_reason":
         summary = "Automatic reasoning executed";
@@ -156,7 +185,7 @@ export class HierarchicalReasoningEngine {
     }
     handleCycleProgression(session, operation);
     logState("Operation performed", { operation, sessionId: session.sessionId, summary });
-    return summary;
+    return { summary, haltTrigger };
   }
 
   private refreshMetrics(session: HierarchicalState, operation: HRMOperation) {
@@ -171,7 +200,10 @@ export class HierarchicalReasoningEngine {
     operation: HRMOperation,
     summary: string,
     suggestedNext: HRMOperation,
-    trace?: AutoReasoningTraceEntry[],
+    extras: {
+      trace?: AutoReasoningTraceEntry[];
+      haltTrigger?: HaltTrigger;
+    } = {},
   ): HRMResponse {
     const content: HRMResponseContent[] = [
       {
@@ -180,13 +212,13 @@ export class HierarchicalReasoningEngine {
       },
     ];
 
-    if (trace && trace.length) {
+    if (extras.trace && extras.trace.length) {
       content.push({
         type: "text",
-        text: `Auto reasoning trace:\n${trace
+        text: `Auto reasoning trace:\n${extras.trace
           .map(
             (entry) =>
-              `${entry.operation} | H:${entry.hCycle} L:${entry.lCycle} | confidence ${entry.metrics.confidenceScore.toFixed(2)} convergence ${entry.metrics.convergenceScore.toFixed(2)} | ${entry.thought}`,
+              `${entry.step}. ${entry.operation} | H:${entry.hCycle} L:${entry.lCycle} | confidence ${entry.metrics.confidenceScore.toFixed(2)} convergence ${entry.metrics.convergenceScore.toFixed(2)} | ${entry.note}`,
           )
           .join("\n")}`,
       });
@@ -197,7 +229,7 @@ export class HierarchicalReasoningEngine {
       content.push({ type: "text", text: `Framework guidance:\n${recentNotes}` });
     }
 
-    return {
+    const response: HRMResponse = {
       content,
       current_state: {
         h_cycle: session.hCycle,
@@ -211,6 +243,13 @@ export class HierarchicalReasoningEngine {
       suggested_next_operation: suggestedNext,
       session_id: session.sessionId,
     };
+    if (extras.trace && extras.trace.length) {
+      response.trace = extras.trace;
+    }
+    if (extras.haltTrigger) {
+      response.halt_trigger = extras.haltTrigger;
+    }
+    return response;
   }
 
   private errorResponse(session: HierarchicalState, operation: HRMOperation, error: unknown): HRMResponse {

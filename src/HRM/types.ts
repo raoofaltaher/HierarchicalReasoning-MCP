@@ -40,6 +40,8 @@ export interface ReasoningMetrics {
   convergenceScore: number;
 }
 
+export type HaltTrigger = "confidence_convergence" | "plateau" | "max_steps";
+
 export interface HierarchicalState {
   sessionId: string;
   hCycle: number;
@@ -62,6 +64,7 @@ export interface HierarchicalState {
   frameworkNotes: string[];
   metricHistory: number[];
   plateauCount: number;
+  recentLThoughtHashes: string[];
 }
 
 export interface HRMResponseContent {
@@ -82,14 +85,17 @@ export interface HRMResponse {
   reasoning_metrics: ReasoningMetrics;
   suggested_next_operation?: HRMOperation;
   session_id: string;
+  trace?: AutoReasoningTraceEntry[];
+  halt_trigger?: HaltTrigger;
   isError?: boolean;
   error_message?: string;
 }
 
 export interface AutoReasoningTraceEntry {
+  step: number;
   operation: HRMOperation;
   hCycle: number;
   lCycle: number;
-  thought: string;
+  note: string;
   metrics: ReasoningMetrics;
 }

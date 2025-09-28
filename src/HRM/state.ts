@@ -4,6 +4,7 @@ import {
   DEFAULT_CONVERGENCE_THRESHOLD,
   DEFAULT_MAX_H_CYCLES,
   DEFAULT_MAX_L_CYCLES_PER_H,
+  DEFAULT_SESSION_TTL_MS,
   INITIAL_METRICS,
   MAX_PENDING_ACTIONS,
   MAX_RECENT_DECISIONS,
@@ -46,6 +47,7 @@ const createInitialState = (params: HRMParameters, sessionId?: string): Hierarch
     frameworkNotes: [],
     metricHistory: [],
     plateauCount: 0,
+    recentLThoughtHashes: [],
   };
 };
 
@@ -59,29 +61,61 @@ const pruneQueue = <T>(items: T[], limit: number) => {
 
 export class SessionManager {
   private sessions = new Map<string, HierarchicalState>();
+  private readonly ttlMs: number | null;
+
+  constructor(ttlMs: number | null = DEFAULT_SESSION_TTL_MS) {
+    this.ttlMs = ttlMs && ttlMs > 0 ? ttlMs : null;
+  }
+
+  private isExpired(session: HierarchicalState, now: number) {
+    return Boolean(this.ttlMs && now - session.lastUpdated > this.ttlMs);
+  }
+
+  private evictExpired(now = Date.now()) {
+    if (!this.ttlMs) {
+      return;
+    }
+    for (const [sessionId, session] of this.sessions.entries()) {
+      if (this.isExpired(session, now)) {
+        this.sessions.delete(sessionId);
+      }
+    }
+  }
+
+  sweepExpiredSessions(now = Date.now()) {
+    this.evictExpired(now);
+  }
 
   getOrCreate(params: HRMParameters): HierarchicalState {
+    this.evictExpired();
     const requestedId = params.session_id;
     const shouldReset = params.reset_state;
 
     if (requestedId && !shouldReset) {
       const existing = this.sessions.get(requestedId);
       if (existing) {
-        existing.maxLCyclesPerH = params.max_l_cycles_per_h ?? existing.maxLCyclesPerH;
-        existing.maxHCycles = params.max_h_cycles ?? existing.maxHCycles;
-        existing.convergenceThreshold = params.convergence_threshold ?? existing.convergenceThreshold;
-        existing.complexityEstimate = params.complexity_estimate ?? existing.complexityEstimate;
-        existing.autoMode = params.operation === "auto_reason";
-        if (params.problem) {
-          existing.problem = params.problem;
+        if (this.isExpired(existing, Date.now())) {
+          this.sessions.delete(requestedId);
+        } else {
+          existing.maxLCyclesPerH = params.max_l_cycles_per_h ?? existing.maxLCyclesPerH;
+          existing.maxHCycles = params.max_h_cycles ?? existing.maxHCycles;
+          existing.convergenceThreshold = params.convergence_threshold ?? existing.convergenceThreshold;
+          existing.complexityEstimate = params.complexity_estimate ?? existing.complexityEstimate;
+          existing.autoMode = params.operation === "auto_reason";
+          if (params.problem) {
+            existing.problem = params.problem;
+          }
+          if (params.workspace_path) {
+            existing.workspacePath = params.workspace_path;
+          }
+          if (!existing.frameworkNotes) {
+            existing.frameworkNotes = [];
+          }
+          if (!existing.recentLThoughtHashes) {
+            existing.recentLThoughtHashes = [];
+          }
+          return existing;
         }
-        if (params.workspace_path) {
-          existing.workspacePath = params.workspace_path;
-        }
-        if (!existing.frameworkNotes) {
-          existing.frameworkNotes = [];
-        }
-        return existing;
       }
     }
 

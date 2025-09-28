@@ -3,7 +3,155 @@ description: AI rules derived by SpecStory from the project AI interaction histo
 globs: *
 ---
 
-# GitHub Copilot General Instructions
+# GitHub Copilot Project Instructions (Hierarchical Reasoning MCP)
+
+> This file has been augmented with project-specific guidance for the Hierarchical Reasoning MCP (HRM) server. It combines general coding principles with the architecture, reasoning methodology, and roadmap unique to this repository.
+
+## 0. Project Snapshot
+
+| Aspect | Status |
+|--------|--------|
+| Core Reasoning Loop | Implemented (H/L cycles, auto mode) |
+| Framework Detection | React, Next.js (basic), Express, Prisma, PostgreSQL (with placeholders for others) |
+| Adaptive Metrics | Heuristic (density + diversity + candidate strength) |
+| Plateau / Halting Logic | Implemented (confidence + convergence + plateau) |
+| Semantic / Embeddings | Not yet (planned Medium/Long term) |
+| Persistence | In-memory only (session map) |
+| Tests | Not yet implemented |
+| Docs | Being expanded (this file + plan update) |
+
+## 1. Architecture Overview
+
+The HRM server implements a hierarchical reasoning paradigm inspired by neuroscience and layered thinking frameworks.
+
+Layers:
+1. Protocol Layer (`index.ts`): MCP tool definition & request dispatch.
+2. Orchestration (`engine.ts`): Auto reasoning loop, operation routing, framework enrichment.
+3. Operations (`operations/*.ts`): Pure handlers for `h_plan`, `l_execute`, `h_update`, `evaluate`, `halt_check`.
+4. State Management (`state.ts`): Session lifecycle, pruning, parameter reconciliation.
+5. Metrics & Policy (`utils/metrics.ts`, `evaluation.ts`, `suggestions.ts`): Heuristic convergence & continuation logic.
+6. Framework Intelligence (`frameworks/*`): Detection + specialist guidance injection.
+7. Utility Layer (`utils/*.ts`): Text normalization, logging, context compaction.
+
+Design Goals:
+- Deterministic, side-effect-light core logic.
+- Extensibility via detectors & specialists (Strategy pattern).
+- Separation of reasoning state from transport logic.
+- Safe auto mode (bounded iterations, plateau detection).
+
+## 2. Reasoning Model Adaptation
+
+| Concept | Implementation |
+|---------|----------------|
+| High-Level (H) | Strategic aggregation in `hContext` (planning & synthesis) |
+| Low-Level (L) | Detail accumulation in `lContext` (task decomposition) |
+| Multi-Cycle | `max_l_cycles_per_h` governs nested execution depth |
+| Convergence | Heuristic composite score (coverage + diversity + candidates) |
+| Halting | Confidence + convergence threshold OR plateau window |
+| Auto Mode | Cyclic suggestion engine + safety cap (`MAX_AUTO_REASONING_STEPS`) |
+
+Planned Enhancements (Medium+): semantic similarity, confidence decomposition, exploration mode.
+
+## 3. Current Implementation Status vs Plan
+
+| Phase | Elements | Status |
+|-------|----------|--------|
+| Phase 1 | Server scaffold, ops, state | Complete |
+| Phase 2 | Cycle logic, convergence heuristics | Complete (heuristic only) |
+| Phase 3 (partial) | Plateau detection, basic adaptive thresholds | Partial |
+| Phase 3 (remaining) | Advanced stagnation heuristics, branching | Pending |
+| Phase 4 | Tests, documentation polish | Not started |
+| Phase 5+ | Embeddings, context-aware convergence, persistence | Not started |
+
+## 4. Priority Improvement Roadmap
+
+### Immediate (High Value / Low Effort)
+1. Unit tests: metrics, suggestions, cycle progression, detectors.
+2. Integration test: `auto_reason` with synthetic multi-framework workspace.
+3. Generate tool schema automatically from Zod (eliminate duplication).
+4. Session TTL eviction sweep (configurable inactivity timeout).
+5. Enhanced halting rationale (explicit trigger annotation).
+6. Duplicate low-level thought guard (hash last N entries).
+
+### Short Term
+7. Structured trace field (array) instead of embedding JSON string.
+8. "Stack profile" summarizing combined framework signatures.
+9. Boundary-aware keyword filters to reduce false framework triggers.
+10. README section: hierarchical ops usage & examples.
+11. Persistence adapter interface (pluggable backends; start with memory stub).
+
+### Medium Term
+12. Pluggable similarity scorer interface (embedding-ready).
+13. Confidence decomposition (coverage, diversity, candidates, momentum components).
+14. Exploration mode on early plateau (inject strategic variant prompts).
+15. Metrics history & observability endpoint / tool.
+16. Structured JSON logging toggle (env flag `HRM_LOG_FORMAT=json`).
+
+### Long Term
+17. Embedding service abstraction + semantic dedupe.
+18. Versioned session export/import (collaboration & replay).
+19. Pattern analytics registry (adoption feedback loop).
+20. Domain-specific halting strategies (architecture vs debugging vs api design modes).
+
+### Quick Wins (Candidate Next Patch Set)
+- Add session eviction (TTL) in `SessionManager`.
+- Add `trace` array to `HRMResponse` for `auto_reason`.
+- Replace manual tool schema with generated JSON from Zod.
+
+## 5. Coding Conventions (Supplemental Project-Specific)
+- Prefer pure functions for metrics & suggestions to facilitate future model integration.
+- Keep reasoning state mutations centralized in `SessionManager` and operation handlers.
+- Any new detector must: (a) list indicators with weights, (b) specify minimum confidence threshold, (c) justify capability patterns.
+- Expose internal scoring rationales when adding advanced convergence.
+
+## 6. Testing Strategy (To Implement)
+| Level | Focus | Notes |
+|-------|-------|-------|
+| Unit | metrics, suggestions, text normalization, detectors | Deterministic inputs/outputs |
+| Integration | auto reasoning path, multi-framework enrichment | Use fixture workspace trees |
+| Scenario | Architecture planning, debugging flow | Assert convergence + halting rationale presence |
+| Future | Semantic similarity plug-in | Mock embedding provider |
+
+Minimal test harness recommendation: Jest with isolated module state; dependency injection for future embedding service.
+
+## 7. Observability & Telemetry (Planned)
+- Structured logs (info events: operation, cycle indexes, metrics delta).
+- Optional trace emission (structured array) for UI embedding.
+- Potential metrics: time per cycle, average thought length, retention ratio.
+
+## 8. Security & Safety Notes (Project Context)
+- Framework detection operates only on local workspace path (no network I/O).
+- Avoid embedding raw large file content directly into context—truncate via future semantic summarizer.
+- Session IDs are UUIDs; do not accept caller-supplied IDs for cross-user sharing until auth model exists.
+
+## 9. MCP / Sequential Thinking Alignment
+- Mirrors Sequential Thinking MCP pattern of iterative tool operation but adds multi-level hierarchy and convergence gates.
+- Suggestion pipeline analogous to tactical step selection with added plateau abort conditions.
+- Future embedding integration should remain side-effect-free relative to protocol contract.
+
+## 10. Contribution Guidance (Project-Specific)
+PR Requirements:
+1. Include or update tests where logic changes.
+2. Update roadmap if introducing new medium/long-term feature surface.
+3. Document new operations or response fields in README + this file.
+4. Keep functions under ~80 lines; extract helpers early.
+
+## 11. Decision Log (Recent)
+| Decision | Date | Rationale |
+|----------|------|-----------|
+| Heuristic coverage metrics only (phase 2) | Current | Faster bootstrap; avoids premature embedding dependency |
+| Plateau halting window = 3 | Current | Balances noise vs responsiveness |
+| Confidence threshold default 0.8 | Current | Aligns with convergence heuristic and reduces premature halts |
+
+## 12. Future Extensibility Hooks
+- `SimilarityScorer` interface (to add).
+- `PersistenceAdapter` with methods: `load(sessionId)`, `save(state)`, `evict(beforeTimestamp)`.
+- `EmbeddingProvider` facade (OpenAI/local/huggingface).
+- `HaltingStrategy` pluggable module per domain type.
+
+---
+
+The following sections retain the generalized Copilot guidelines and should continue to be honored.
 
 ## Core Principles
 
