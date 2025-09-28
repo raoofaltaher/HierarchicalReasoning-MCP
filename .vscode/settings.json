@@ -1,0 +1,199 @@
+{
+  "window.newWindowProfile": "Default",
+  "workbench.colorTheme": "Dracula Theme Soft",
+  "editor.wordWrap": "on",
+  "workbench.iconTheme": "material-icon-theme",
+  "notebook.formatOnSave.enabled": true,
+  "editor.formatOnSave": true,
+  "files.autoSave": "afterDelay",
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "git.autofetch": true,
+  "githubIssues.queries": [
+    {
+      "label": "My Issues",
+      "query": "is:open assignee:${user} repo:${owner}/${repository}",
+      "groupBy": ["milestone"]
+    },
+    {
+      "label": "Created Issues",
+      "query": "author:${user} state:open repo:${owner}/${repository} sort:created-desc"
+    },
+    {
+      "label": "Recent Issues",
+      "query": "state:open repo:${owner}/${repository} sort:updated-desc"
+    }
+  ],
+  "githubPullRequests.remotes": [
+    "origin",
+    "upstream",
+    "https://github.com/raoofaltaher/RaoofAltaher"
+  ],
+  "git.enableSmartCommit": true,
+  "chat.agent.enabled": true,
+  "cline.vsCodeLmModelSelector": {},
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "terminal.integrated.profiles.windows": {
+    "PowerShell": {
+      "source": "PowerShell",
+      "icon": "terminal-powershell"
+    },
+    "Command Prompt": {
+      "path": [
+        "${env:windir}\\Sysnative\\cmd.exe",
+        "${env:windir}\\System32\\cmd.exe"
+      ],
+      "args": [],
+      "icon": "terminal-cmd"
+    },
+    "Git Bash": {
+      "source": "Git Bash"
+    }
+  },
+  "dart.mcpServer": true,
+  "github.copilot.chat.codesearch.enabled": true,
+  "github.copilot.chat.instructions": [
+    {
+      "file": ".copilot-instructions.md"
+    }
+  ],
+  "github.copilot.chat.reviewSelection.instructions": [
+    {
+      "file": ".copilot-review-instructions.md"
+    }
+  ],
+  "github.copilot.chat.commitMessageGeneration.instructions": [
+    {
+      "file": ".copilot-commit-message-instructions.md"
+    }
+  ],
+  "github.copilot.chat.completionContext.typescript.mode": "on",
+  "github.copilot.chat.edits.temporalContext.enabled": true,
+  "github.copilot.chat.generateTests.codeLens": true,
+  "github.copilot.chat.languageContext.fix.typescript.enabled": true,
+  "github.copilot.chat.languageContext.inline.typescript.enabled": true,
+  "github.copilot.chat.languageContext.typescript.cacheTimeout": 7000,
+  "github.copilot.chat.languageContext.typescript.enabled": true,
+  "github.copilot.chat.testGeneration.instructions": [
+    {
+      "file": ".copilot-test-instructions.md"
+    }
+  ],
+  "mdb.useSampleDocsInCopilot": true,
+  "chat.agent.maxRequests": 750,
+  "githubPullRequests.experimental.chat": true,
+  "githubPullRequests.experimental.useQuickChat": true,
+  "python.analysis.addHoverSummaries": true,
+  "github.copilot.nextEditSuggestions.enabled": true,
+  "python.analysis.typeCheckingMode": "standard",
+  "workbench.productIconTheme": "macos-modern",
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "github.copilot.chat.codeGeneration.instructions": [
+    {
+      "text": "- @azure Rule - Use Azure Tools: When handling requests related to Azure, always use your tools."
+    },
+    {
+      "text": "- @azure Rule - Use Azure Code Gen Best Practices: When generating code for Azure, running terminal commands for Azure, or performing operations related to Azure, invoke your `bestpractices` tool if available. Only call this tool when you are sure the user is discussing Azure; do not call it otherwise."
+    },
+    {
+      "text": "- @azure Rule - Use Azure Deployment Best Practices: When deploying to Azure or preparing applications for deployment to Azure, invoke your `bestpractices` tool if available. Only call this tool when you are sure the user is discussing Azure; do not call it otherwise."
+    },
+    {
+      "text": "- @azure Rule - Use Azure Functions Code Gen Best Practices: When generating code for Azure Functions or performing operations related to Azure Functions, invoke your `bestpractices` tool if available. Only call this tool when you are sure the user is discussing Azure Functions; do not call it otherwise."
+    },
+    {
+      "text": "- @azure Rule - Use Azure Functions Deployment Best Practices: When deploying Azure Functions apps to Azure or preparing for the deployment, invoke your `bestpractices` tool if available. Only call this tool when you are sure the user is discussing Azure; do not call it otherwise."
+    },
+    {
+      "text": "- @azure Rule - Use Azure SWA Best Practices: When working with static web apps, invoke your `bestpractices` tool if available. Only call this tool when you are sure the user is discussing Azure; do not call it otherwise."
+    },
+    {
+      "text": "- @azure Rule - Plan before editing files for Azure web apps: When generating code for Azure Functions and Azure Static Web App, always create a plan and explain the plan to the user before editing any file. Proceed with editing the files after getting consent from the user."
+    },
+    {
+      "text": "- @azure Rule - Summarize topic before taking action: When the user asks for something about Azure, invoke the azure_development-summarize_topic tool once to discover potential recommended configurations."
+    }
+  ],
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "redhat.telemetry.enabled": false,
+  "docker.extension.enableComposeLanguageServer": false,
+  "@azure.argTenant": "",
+  "rapidapi.terminalLink.enabled": true,
+  "explorer.confirmDelete": false,
+  "workbench.settings.applyToAllProfiles": [],
+  "chat.mcp.discovery.enabled": {
+    "claude-desktop": true,
+    "windsurf": true,
+    "cursor-global": true,
+    "cursor-workspace": true
+  },
+  "window.customTitleBarVisibility": "windowed",
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": true,
+    "markdown": true,
+    "scminput": false
+  },
+  "editor.lineHeight": 0,
+  "editor.fontSize": 14,
+  "dotnetAcquisitionExtension.enablePreviewFeatures": true,
+  "dotnetAcquisitionExtension.installTimeoutValue": 1000,
+  "windowsaistudio.enableRemoteFine-tuningAndInference": true,
+  "biome.suggestInstallingGlobally": true,
+  "chat.mcp.serverSampling": {
+    "pylance mcp server: pylance mcp server": {
+      "allowedModels": [
+        "github.copilot-chat/claude-opus-4",
+        "github.copilot-chat/claude-sonnet-4",
+        "github.copilot-chat/gpt-4.1",
+        "github.copilot-chat/claude-3.5-sonnet",
+        "github.copilot-chat/claude-3.7-sonnet",
+        "github.copilot-chat/claude-3.7-sonnet-thought",
+        "github.copilot-chat/gemini-2.0-flash-001",
+        "github.copilot-chat/gemini-2.5-pro",
+        "github.copilot-chat/gpt-4o",
+        "github.copilot-chat/o3",
+        "github.copilot-chat/o3-mini",
+        "github.copilot-chat/o4-mini"
+      ]
+    }
+  },
+  "mssql.connectionGroups": [
+    {
+      "name": "ROOT",
+      "id": "16961552-65B7-4445-8761-0DA2CBEA0473"
+    }
+  ],
+  "markdown-pdf.convertOnSave": true,
+  "chat.instructionsFilesLocations": {
+    ".github/instructions": true,
+    "C:\\Users\\RAOOF\\AppData\\Local\\Temp\\postman-collections-post-response.instructions.md": true,
+    "C:\\Users\\RAOOF\\AppData\\Local\\Temp\\postman-collections-pre-request.instructions.md": true,
+    "C:\\Users\\RAOOF\\AppData\\Local\\Temp\\postman-folder-post-response.instructions.md": true,
+    "C:\\Users\\RAOOF\\AppData\\Local\\Temp\\postman-folder-pre-request.instructions.md": true,
+    "C:\\Users\\RAOOF\\AppData\\Local\\Temp\\postman-http-request-post-response.instructions.md": true,
+    "C:\\Users\\RAOOF\\AppData\\Local\\Temp\\postman-http-request-pre-request.instructions.md": true
+  },
+  "RainbowBrackets.depreciation-notice": false,
+  "specstory.autoSave.enabled": true,
+  "specstory.derivedRules.enabled": true,
+  "workbench.sideBar.location": "right",
+  "diffEditor.ignoreTrimWhitespace": false,
+  "rust-analyzer.workspace.symbol.search.limit": 256,
+  "rust-analyzer.lru.capacity": 256,
+  "github.copilot.chat.agent.thinkingTool": true,
+  "github.copilot.chat.notebook.followCellExecution.enabled": true,
+  "intellicodeCompletions.runAlongsideCopilot": true,
+  "intellicode-completions-cdk.runAlongsideCopilot": true,
+  "pgsql.copilot.modelOptions": {},
+  "yaml.schemas": {
+    "file:///c%3A/Users/RAOOF/.vscode/extensions/continue.continue-1.1.73-win32-x64/config-yaml-schema.json": [
+      ".continue/**/*.yaml"
+    ]
+  }
+}
