@@ -21,7 +21,7 @@ export const HRMParametersSchema = z.object({
   max_h_cycles: z.number().int().positive().max(20).default(4),
   confidence_score: z.number().min(0).max(1).optional(),
   complexity_estimate: z.number().min(1).max(10).optional(),
-  convergence_threshold: z.number().min(0.5).max(0.99).default(0.85),
+  convergence_threshold: z.number().min(0.5).max(0.99).optional(),
   h_context: z.string().optional(),
   l_context: z.string().optional(),
   solution_candidates: z.array(z.string()).optional(),
@@ -39,6 +39,8 @@ export interface ReasoningMetrics {
   shouldContinue: boolean;
   convergenceScore: number;
 }
+
+export type HaltTrigger = "confidence_convergence" | "plateau" | "max_steps";
 
 export interface HierarchicalState {
   sessionId: string;
@@ -62,6 +64,7 @@ export interface HierarchicalState {
   frameworkNotes: string[];
   metricHistory: number[];
   plateauCount: number;
+  recentLThoughtHashes: string[];
 }
 
 export interface HRMResponseContent {
@@ -82,14 +85,21 @@ export interface HRMResponse {
   reasoning_metrics: ReasoningMetrics;
   suggested_next_operation?: HRMOperation;
   session_id: string;
+  trace?: AutoReasoningTraceEntry[];
+  halt_trigger?: HaltTrigger;
   isError?: boolean;
   error_message?: string;
+  diagnostics?: {
+    plateau_count: number;
+    confidence_window: number[];
+  };
 }
 
 export interface AutoReasoningTraceEntry {
+  step: number;
   operation: HRMOperation;
   hCycle: number;
   lCycle: number;
-  thought: string;
+  note: string;
   metrics: ReasoningMetrics;
 }

@@ -1,0 +1,13 @@
+{
+	"servers": {
+            "hierarchicalreasoning": {
+            "command": "node",
+            "args": ["./src/HRM/dist/index.js"],
+            "env": {
+                "HRM_DEBUG": "true",
+                "HRM_CONVERGENCE_THRESHOLD": "0.8"
+            }
+		}
+	},
+	"inputs": []
+}

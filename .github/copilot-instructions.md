@@ -3,7 +3,186 @@ description: AI rules derived by SpecStory from the project AI interaction histo
 globs: *
 ---
 
-# GitHub Copilot General Instructions
+# GitHub Copilot Project Instructions (Hierarchical Reasoning MCP)
+
+> This file has been augmented with project-specific guidance for the Hierarchical Reasoning MCP (HRM) server. It combines general coding principles with the architecture, reasoning methodology, and roadmap unique to this repository.
+
+## 0. Project Snapshot
+
+| Aspect                  | Status                                                                                             |
+| ----------------------- | -------------------------------------------------------------------------------------------------- |
+| Core Reasoning Loop     | Implemented (H/L cycles, auto mode, structured trace; optional textual trace via env toggle)       |
+| Framework Detection     | React, Next.js (basic), Express, Prisma, PostgreSQL (with placeholders for others)                 |
+| Adaptive Metrics        | Heuristic (density + diversity + candidate strength)                                               |
+| Plateau / Halting Logic | Implemented (confidence + convergence OR plateau; window & delta runtime overridable)              |
+| Semantic / Embeddings   | Not yet (planned Medium/Long term)                                                                 |
+| Persistence             | In-memory only (session map)                                                                       |
+| Tests                   | Expanded Vitest suite (TTL eviction, halt triggers, plateau window/delta, detectors, enrichment)   |
+| Diagnostics             | Exposed (plateau_count, confidence window history) in all responses                                |
+| Docs                    | Actively maintained (instructions + README synced with recent env overrides & diagnostics)         |
+
+## 1. Architecture Overview
+
+The HRM server implements a hierarchical reasoning paradigm inspired by neuroscience and layered thinking frameworks.
+
+Layers:
+
+1. Protocol Layer (`index.ts`): MCP tool definition & request dispatch.
+2. Orchestration (`engine.ts`): Auto reasoning loop, operation routing, framework enrichment.
+3. Operations (`operations/*.ts`): Pure handlers for `h_plan`, `l_execute`, `h_update`, `evaluate`, `halt_check`.
+4. State Management (`state.ts`): Session lifecycle, pruning, parameter reconciliation.
+5. Metrics & Policy (`utils/metrics.ts`, `evaluation.ts`, `suggestions.ts`): Heuristic convergence & continuation logic.
+6. Framework Intelligence (`frameworks/*`): Detection + specialist guidance injection.
+7. Utility Layer (`utils/*.ts`): Text normalization, logging, context compaction.
+
+Design Goals:
+
+- Deterministic, side-effect-light core logic.
+- Extensibility via detectors & specialists (Strategy pattern).
+- Separation of reasoning state from transport logic.
+- Safe auto mode (bounded iterations, plateau detection).
+
+## 2. Reasoning Model Adaptation
+
+| Concept        | Implementation                                                     |
+| -------------- | ------------------------------------------------------------------ |
+| High-Level (H) | Strategic aggregation in `hContext` (planning & synthesis)         |
+| Low-Level (L)  | Detail accumulation in `lContext` (task decomposition)             |
+| Multi-Cycle    | `max_l_cycles_per_h` governs nested execution depth                |
+| Convergence    | Heuristic composite score (coverage + diversity + candidates)      |
+| Halting        | Confidence + convergence threshold OR plateau window               |
+| Auto Mode      | Cyclic suggestion engine + safety cap (`MAX_AUTO_REASONING_STEPS`) |
+
+Planned Enhancements (Medium+): semantic similarity, confidence decomposition, exploration mode.
+
+## 3. Current Implementation Status vs Plan
+
+| Phase               | Elements                                           | Status                    |
+| ------------------- | -------------------------------------------------- | ------------------------- |
+| Phase 1             | Server scaffold, ops, state                        | Complete                  |
+| Phase 2             | Cycle logic, convergence heuristics                | Complete (heuristic only) |
+| Phase 3 (partial)   | Plateau detection, basic adaptive thresholds       | Partial                   |
+| Phase 3 (remaining) | Advanced stagnation heuristics, branching          | Pending                   |
+| Phase 4             | Tests, documentation polish                        | In progress (unit suite)  |
+| Phase 5+            | Embeddings, context-aware convergence, persistence | Not started               |
+
+## 4. Priority Improvement Roadmap
+
+### Immediate (High Value / Low Effort)
+
+1. Add integration test simulating multi-framework workspace for `auto_reason` (pending).
+2. Introduce coverage reporting + CI gate using Vitest.
+3. Add CLI utility to dump last session diagnostics/trace (debug aid).
+4. Documentation polish: usage examples for diagnostics & plateau tuning.
+
+### Recently Completed
+
+- Auto-generated tool schema derived from `HRMParametersSchema` (no manual drift)
+- Session TTL eviction with configurable override
+- Structured trace array + explicit halt trigger rationale
+- Duplicate low-level thought guard to suppress repeated steps
+- Runtime plateau window override (`HRM_PLATEAU_WINDOW`)
+- Runtime plateau delta override (`HRM_PLATEAU_DELTA`)
+- Optional textual auto trace emission (`HRM_INCLUDE_TEXT_TRACE`)
+- Diagnostics block (plateau_count, confidence_window) added to responses
+- Convergence threshold made request-optional; env override (`HRM_CONVERGENCE_THRESHOLD` / alias) respected
+- Expanded test suite (metrics heuristics, plateau variants, detectors, env overrides, framework enrichment, error handling)
+
+### Short Term
+
+5. "Stack profile" summarizing combined framework signatures.
+6. Boundary-aware keyword filters to reduce false framework triggers.
+7. README section: hierarchical ops usage & examples.
+8. Persistence adapter interface (pluggable backends; start with memory stub).
+
+### Medium Term
+
+12. Pluggable similarity scorer interface (embedding-ready).
+13. Confidence decomposition (coverage, diversity, candidates, momentum components).
+14. Exploration mode on early plateau (inject strategic variant prompts).
+15. Metrics history & observability endpoint / tool.
+16. Structured JSON logging toggle (env flag `HRM_LOG_FORMAT=json`).
+
+### Long Term
+
+17. Embedding service abstraction + semantic dedupe.
+18. Versioned session export/import (collaboration & replay).
+19. Pattern analytics registry (adoption feedback loop).
+20. Domain-specific halting strategies (architecture vs debugging vs api design modes).
+
+### Quick Wins (Candidate Next Patch Set)
+
+- Integration test across mixed framework workspace (React + Express + Prisma) to validate combined guidance
+- Coverage threshold enforcement in CI (e.g. 80%)
+- CLI/Tool: export last N evaluations + halting rationale
+- Lint / script to verify README env var tables mirror constants & engine wiring
+
+## 5. Coding Conventions (Supplemental Project-Specific)
+
+- Prefer pure functions for metrics & suggestions to facilitate future model integration.
+- Keep reasoning state mutations centralized in `SessionManager` and operation handlers.
+- Any new detector must: (a) list indicators with weights, (b) specify minimum confidence threshold, (c) justify capability patterns.
+- Expose internal scoring rationales when adding advanced convergence.
+
+## 6. Testing Strategy (Current + Next)
+
+| Level       | Focus                                               | Status / Notes                                  |
+| ----------- | --------------------------------------------------- | ----------------------------------------------- |
+| Unit        | metrics, suggestions, text normalization, detectors | Vitest in place; expand beyond TTL/halt/dedupe  |
+| Integration | auto reasoning path, multi-framework enrichment     | Pending — needs workspace fixtures              |
+| Scenario    | Architecture planning, debugging flow               | Pending — ensure trace + halt metadata asserted |
+| Future      | Semantic similarity plug-in                         | Mock embedding provider when feature lands      |
+
+Testing stack: Vitest + fake timers for TTL; prefer pure helpers to keep state deterministic. Add coverage thresholds once broader suite lands.
+
+## 7. Observability & Telemetry (Planned)
+
+- Structured logs (info events: operation, cycle indexes, metrics delta).
+- Optional trace emission (structured array) for UI embedding.
+- Potential metrics: time per cycle, average thought length, retention ratio.
+
+## 8. Security & Safety Notes (Project Context)
+
+- Framework detection operates only on local workspace path (no network I/O).
+- Avoid embedding raw large file content directly into context—truncate via future semantic summarizer.
+- Session IDs are UUIDs; do not accept caller-supplied IDs for cross-user sharing until auth model exists.
+
+## 9. MCP / Sequential Thinking Alignment
+
+- Mirrors Sequential Thinking MCP pattern of iterative tool operation but adds multi-level hierarchy and convergence gates.
+- Suggestion pipeline analogous to tactical step selection with added plateau abort conditions.
+- Future embedding integration should remain side-effect-free relative to protocol contract.
+
+## 10. Contribution Guidance (Project-Specific)
+
+PR Requirements:
+
+1. Include or update tests where logic changes.
+2. Update roadmap if introducing new medium/long-term feature surface.
+3. Document new operations or response fields in README + this file.
+4. Keep functions under ~80 lines; extract helpers early.
+
+## 11. Decision Log (Recent)
+
+| Decision                                          | Date    | Rationale                                                                  |
+| ------------------------------------------------- | ------- | ---------------------------------------------------------------------------- |
+| Heuristic coverage metrics only (phase 2)         | Current | Faster bootstrap; avoids premature embedding dependency                      |
+| Plateau halting window base = 3 (overridable)     | Current | Balances noise vs responsiveness; allows tuning via env                      |
+| Plateau delta base = 0.02 (overridable)           | Current | Ensures meaningful progress; tunable for noisy scenarios                     |
+| Confidence threshold default env-overridable      | Current | Allows adaptive convergence criteria per deployment                          |
+| Textual auto trace opt-in via env toggle          | Current | Reduces response verbosity in default mode                                  |
+| Diagnostics always included in responses          | Current | Enables clients to adapt UI/prompts without extra calls                     |
+
+## 12. Future Extensibility Hooks
+
+- `SimilarityScorer` interface (to add).
+- `PersistenceAdapter` with methods: `load(sessionId)`, `save(state)`, `evict(beforeTimestamp)`.
+- `EmbeddingProvider` facade (OpenAI/local/huggingface).
+- `HaltingStrategy` pluggable module per domain type.
+
+---
+
+The following sections retain the generalized Copilot guidelines and should continue to be honored.
 
 ## Core Principles
 
@@ -19,6 +198,7 @@ globs: *
 ### 2. Best Practices
 
 #### Security First
+
 - Never hardcode sensitive information (API keys, passwords, tokens)
 - Validate all user inputs and sanitize data
 - Use parameterized queries to prevent SQL injection
@@ -26,6 +206,7 @@ globs: *
 - Follow OWASP security guidelines
 
 #### Performance Considerations
+
 - Optimize for readability first, performance second
 - Avoid premature optimization
 - Use efficient algorithms and data structures when appropriate
@@ -33,6 +214,7 @@ globs: *
 - Profile before optimizing
 
 #### Error Handling
+
 - Implement comprehensive error handling
 - Use specific exception types
 - Provide meaningful error messages
@@ -42,6 +224,7 @@ globs: *
 ### 3. Language-Specific Guidelines
 
 #### JavaScript/TypeScript
+
 - Use TypeScript when possible for better type safety
 - Prefer `const` and `let` over `var`
 - Use async/await instead of callbacks or raw promises
@@ -58,13 +241,14 @@ const fetchUserData = async (userId: string): Promise<User> => {
     }
     return await response.json();
   } catch (error) {
-    console.error('Error fetching user data:', error);
+    console.error("Error fetching user data:", error);
     throw error;
   }
 };
 ```
 
 #### Python
+
 - Follow PEP 8 style guidelines
 - Use type hints for better code documentation
 - Prefer list comprehensions when they improve readability
@@ -88,6 +272,7 @@ def process_user_data(user_id: str) -> Optional[User]:
 ```
 
 #### React/Frontend
+
 - Use functional components with hooks
 - Implement proper state management
 - Optimize re-renders with React.memo and useMemo
@@ -104,7 +289,7 @@ const UserProfile: React.FC<{ userId: string }> = ({ userId }) => {
   useEffect(() => {
     fetchUser(userId)
       .then(setUser)
-      .catch(err => setError(err.message))
+      .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
   }, [userId]);
 
@@ -119,12 +304,14 @@ const UserProfile: React.FC<{ userId: string }> = ({ userId }) => {
 ### 4. Documentation Standards
 
 #### Code Comments
+
 - Explain **why**, not **what**
 - Document complex business logic
 - Include examples for public APIs
 - Keep comments up-to-date with code changes
 
 #### README Files
+
 - Clear project description and purpose
 - Installation and setup instructions
 - Usage examples and API documentation
@@ -132,6 +319,7 @@ const UserProfile: React.FC<{ userId: string }> = ({ userId }) => {
 - License information
 
 #### API Documentation
+
 - Document all endpoints, parameters, and responses
 - Include example requests and responses
 - Specify error codes and handling
@@ -140,12 +328,14 @@ const UserProfile: React.FC<{ userId: string }> = ({ userId }) => {
 ### 5. Testing Philosophy
 
 #### Test Coverage
+
 - Aim for high test coverage (80%+) but focus on critical paths
 - Write tests before fixing bugs (TDD approach)
 - Include unit, integration, and end-to-end tests
 - Mock external dependencies appropriately
 
 #### Test Quality
+
 - Tests should be independent and deterministic
 - Use descriptive test names that explain the scenario
 - Follow the AAA pattern (Arrange, Act, Assert)
@@ -153,11 +343,11 @@ const UserProfile: React.FC<{ userId: string }> = ({ userId }) => {
 
 ```javascript
 // Good test example
-describe('UserService.createUser', () => {
-  it('should create user with valid data and return user ID', async () => {
+describe("UserService.createUser", () => {
+  it("should create user with valid data and return user ID", async () => {
     // Arrange
-    const userData = { name: 'John Doe', email: 'john@example.com' };
-    const mockUserId = '12345';
+    const userData = { name: "John Doe", email: "john@example.com" };
+    const mockUserId = "12345";
     mockDatabase.insert.mockResolvedValue({ id: mockUserId });
 
     // Act
@@ -168,13 +358,14 @@ describe('UserService.createUser', () => {
     expect(mockDatabase.insert).toHaveBeenCalledWith(userData);
   });
 
-  it('should throw validation error for invalid email', async () => {
+  it("should throw validation error for invalid email", async () => {
     // Arrange
-    const invalidUserData = { name: 'John', email: 'invalid-email' };
+    const invalidUserData = { name: "John", email: "invalid-email" };
 
     // Act & Assert
-    await expect(userService.createUser(invalidUserData))
-      .rejects.toThrow('Invalid email format');
+    await expect(userService.createUser(invalidUserData)).rejects.toThrow(
+      "Invalid email format"
+    );
   });
 });
 ```
@@ -182,6 +373,7 @@ describe('UserService.createUser', () => {
 ### 6. Architecture Patterns
 
 #### SOLID Principles
+
 - **Single Responsibility**: Each class/function should have one reason to change
 - **Open/Closed**: Open for extension, closed for modification
 - **Liskov Substitution**: Derived classes must be substitutable for base classes
@@ -189,6 +381,7 @@ describe('UserService.createUser', () => {
 - **Dependency Inversion**: Depend on abstractions, not concretions
 
 #### Design Patterns
+
 - Use appropriate design patterns (Factory, Observer, Strategy, etc.)
 - Avoid over-engineering with unnecessary patterns
 - Prefer composition over inheritance
@@ -197,12 +390,14 @@ describe('UserService.createUser', () => {
 ### 7. Version Control
 
 #### Commit Messages
+
 - Use conventional commit format
 - Keep commits atomic and focused
 - Write clear, descriptive commit messages
 - Include issue references when applicable
 
 #### Branch Strategy
+
 - Use feature branches for new development
 - Keep branches short-lived and focused
 - Use descriptive branch names
@@ -211,12 +406,14 @@ describe('UserService.createUser', () => {
 ### 8. Deployment and DevOps
 
 #### Environment Management
+
 - Use environment variables for configuration
 - Maintain separate configs for dev/staging/production
 - Implement proper logging and monitoring
 - Use CI/CD pipelines for automated deployments
 
 #### Performance Monitoring
+
 - Implement application performance monitoring (APM)
 - Set up alerts for critical metrics
 - Monitor database performance and query optimization
@@ -225,6 +422,7 @@ describe('UserService.createUser', () => {
 ### 9. Accessibility and Inclusivity
 
 #### Web Accessibility
+
 - Follow WCAG 2.1 AA guidelines
 - Use semantic HTML elements
 - Provide alternative text for images
@@ -232,6 +430,7 @@ describe('UserService.createUser', () => {
 - Test with screen readers
 
 #### Inclusive Design
+
 - Consider diverse user needs and contexts
 - Use inclusive language in code and documentation
 - Design for different devices and connection speeds
@@ -240,12 +439,14 @@ describe('UserService.createUser', () => {
 ### 10. Communication Guidelines
 
 #### Code Reviews
+
 - Be constructive and respectful in feedback
 - Explain the reasoning behind suggestions
 - Ask questions to understand intent
 - Acknowledge good practices and improvements
 
 #### Documentation
+
 - Write for your future self and team members
 - Use clear, concise language
 - Include relevant examples and use cases
@@ -265,6 +466,7 @@ When suggesting code solutions, prioritize in this order:
 ## Tools and Technologies
 
 ### Preferred Tools
+
 - **Linting**: ESLint (JavaScript), Pylint (Python), etc.
 - **Formatting**: Prettier, Black, etc.
 - **Testing**: Jest, pytest, React Testing Library
@@ -272,6 +474,7 @@ When suggesting code solutions, prioritize in this order:
 - **Documentation**: JSDoc, Sphinx, Swagger/OpenAPI
 
 ### Framework Preferences
+
 - **Frontend**: React, Next.js, Vue.js
 - **Backend**: Node.js/Express, Python/FastAPI, Python/Django
 - **Database**: PostgreSQL, MongoDB (with proper justification)
@@ -282,14 +485,14 @@ Remember: These are guidelines, not rigid rules. Always consider the specific co
 ### Development Workflow
 
 - When working on the `modelcontextprotocol/servers` repository:
-    - Fork the repository.
-    - Clone the forked repository to your local development environment: `git clone <your-forked-repo-url>`
-    - Add the upstream remote:
-      ```bash
-      git remote add upstream https://github.com/modelcontextprotocol/servers.git
-      git fetch upstream
-      git pull upstream main
-      ```
-    - Create a new branch for your feature development: `git checkout -b <feature-branch-name>`
-    - Develop within the `src/` directory following the project's architecture.
-    - This approach ensures clean integration and easy upstream merging.
+  - Fork the repository.
+  - Clone the forked repository to your local development environment: `git clone <your-forked-repo-url>`
+  - Add the upstream remote:
+    ```bash
+    git remote add upstream https://github.com/modelcontextprotocol/servers.git
+    git fetch upstream
+    git pull upstream main
+    ```
+  - Create a new branch for your feature development: `git checkout -b <feature-branch-name>`
+  - Develop within the `src/` directory following the project's architecture.
+  - This approach ensures clean integration and easy upstream merging.
