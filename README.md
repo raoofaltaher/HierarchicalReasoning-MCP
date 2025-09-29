@@ -13,6 +13,30 @@ Hierarchical Reasoning MCP (HRM) is a neuroscience‑inspired dual‑layer reaso
 - Session lifecycle with TTL eviction and environment overrides
 - JSON Schema validated inputs (derived automatically from Zod schema)
 - Diagnostics returned on every response: plateau count + confidence window history
+ - Diagnostics returned on every response: plateau count + confidence window history
+
+## Installation
+
+Install globally (recommended if you want the CLI on your PATH):
+
+```bash
+npm install -g @modelcontextprotocol/server-hierarchical-reasoning
+mcp-server-hierarchical-reasoning --help
+```
+
+Use directly with npx (no global install):
+
+```bash
+npx @modelcontextprotocol/server-hierarchical-reasoning@latest
+```
+
+Add as a dev dependency:
+
+```bash
+npm install --save-dev @modelcontextprotocol/server-hierarchical-reasoning
+```
+
+After installation the binary `mcp-server-hierarchical-reasoning` is available (globally or in `node_modules/.bin`).
 
 ## Usage
 
@@ -23,6 +47,37 @@ npx mcp-server-hierarchical-reasoning
 ```
 
 Once running, the server exposes a single MCP tool named `hierarchicalreasoning`. Provide an `operation` value and optionally supply cycle counters (`h_cycle`, `l_cycle`), thoughts, and candidate solutions to guide reasoning. Set `workspace_path` when you want framework detection (React/Next.js/Express/Prisma today). The server persists session state whenever a `session_id` is supplied.
+
+### Quick Start
+
+1. Install (see Installation above).
+
+1. Run:
+
+```bash
+mcp-server-hierarchical-reasoning
+```
+
+1. Point your MCP client (Claude Desktop / VS Code integration) at the executable.
+
+### Programmatic Launch Example
+
+```js
+import { spawn } from 'node:child_process';
+const proc = spawn('mcp-server-hierarchical-reasoning', { stdio: 'inherit' });
+proc.on('exit', code => console.log('HRM exited with', code));
+```
+
+### When To Use
+
+Choose this MCP server when you need structured multi‑cycle reasoning with:
+
+- Separation of strategic (H) and tactical (L) thinking
+- Automatic iteration until convergence or plateau
+- Transparent diagnostics (confidence momentum / plateau)
+- Framework‑aware hints for common JS/TS stacks
+
+It does not execute arbitrary user code or mutate the filesystem; it focuses on reasoning outputs.
 
 ## Parameters
 
@@ -179,10 +234,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## ⭐ Support
 
 If you find MCP servers useful, please consider starring the repository and contributing new servers or improvements!
-
-## License
-
-MIT
 
 ## Citation
 
