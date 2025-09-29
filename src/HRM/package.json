@@ -1,5 +1,5 @@
 {
-  "name": "@modelcontextprotocol/server-hierarchical-reasoning",
+  "name": "hierarchical-reasoning-mcp",
   "version": "0.1.0",
   "description": "Hierarchical Reasoning Model MCP server",
   "license": "MIT",
