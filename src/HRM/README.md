@@ -1,15 +1,18 @@
 # Hierarchical Reasoning MCP Server
 
-The Hierarchical Reasoning MCP server implements a neuroscience-inspired dual-layer reasoning model for Model Context Protocol tooling. It separates strategic planning (H-level) and tactical execution (L-level), adapts reasoning depth to task complexity, and provides convergence metrics to guide halting decisions.
+Hierarchical Reasoning MCP (HRM) is a neuroscience‑inspired dual‑layer reasoning engine for the Model Context Protocol. It separates strategic planning (High level) from tactical execution (Low level), adaptively iterates based on heuristic metrics, and provides structured diagnostics for safe autonomous reasoning.
 
-## Features
+## ✨ Core Capabilities
 
-- Hierarchical operations: `h_plan`, `l_execute`, `h_update`, `evaluate`, `halt_check`, and `auto_reason`
-- Persistent session state with configurable convergence thresholds and cycle budgets
-- Adaptive metrics (confidence, convergence, complexity) powering halting guidance
-- Auto-reasoning mode that loops through hierarchical cycles with trace export
-- Framework-aware reasoning via optional `workspace_path` input (React/Next.js heuristics, specialized patterns)
-- JSON-schema validated inputs backed by Zod runtime parsing
+- Hierarchical operations: `h_plan`, `l_execute`, `h_update`, `evaluate`, `halt_check`, `auto_reason`
+- Adaptive reasoning metrics: confidence, convergence, complexity (heuristic composite)
+- Dual halting logic: convergence threshold OR confidence plateau (window & delta tunable at runtime)
+- Auto reasoning loop with structured JSON trace (textual dump optional via env flag)
+- Framework-aware enrichment (React / Next.js / Express / Prisma / Postgres heuristics) when `workspace_path` provided
+- Duplicate low-level thought suppression (normalized signature guard)
+- Session lifecycle with TTL eviction and environment overrides
+- JSON Schema validated inputs (derived automatically from Zod schema)
+- Diagnostics returned on every response: plateau count + confidence window history
 
 ## Usage
 
@@ -19,7 +22,7 @@ npm run build
 npx mcp-server-hierarchical-reasoning
 ```
 
-Once running, the server exposes a single MCP tool named  `hierarchicalreasoning`. Provide an `operation` value and optionally supply cycle counters (`h_cycle`, `l_cycle`), thoughts, and candidate solutions to guide reasoning. Set `workspace_path` when you want framework detection (React/Next.js/Express/Prisma today). The server persists session state whenever a `session_id` is supplied. 
+Once running, the server exposes a single MCP tool named `hierarchicalreasoning`. Provide an `operation` value and optionally supply cycle counters (`h_cycle`, `l_cycle`), thoughts, and candidate solutions to guide reasoning. Set `workspace_path` when you want framework detection (React/Next.js/Express/Prisma today). The server persists session state whenever a `session_id` is supplied.
 
 ## Parameters
 
@@ -35,7 +38,7 @@ Once running, the server exposes a single MCP tool named  `hierarchicalreasoning
 | max_h_cycles | integer (1–20) | no | 4 | Maximum high-level cycles (auto reasoning) |
 | confidence_score | number (0–1) | no | – | External confidence signal (optional) |
 | complexity_estimate | number (1–10) | no | – | External complexity hint for adaptive pacing |
-| convergence_threshold | number (0.5–0.99) | no | 0.85 | Threshold for halting via confidence/convergence |
+| convergence_threshold | number (0.5–0.99) | no | (env or 0.85) | Optional; if omitted, falls back to `HRM_CONVERGENCE_THRESHOLD` / alias else 0.85 |
 | h_context | string | no | – | Manually injected aggregated context override |
 | l_context | string | no | – | Manually injected detailed context override |
 | solution_candidates | string[] | no | – | Candidate solution list influencing evaluation |
@@ -43,19 +46,41 @@ Once running, the server exposes a single MCP tool named  `hierarchicalreasoning
 | reset_state | boolean | no | – | Force session reset before operation |
 | workspace_path | string | no | – | Local path for framework detection heuristics |
 
-## Auto Reasoning Trace
+## Auto Reasoning Trace & Halting
 
-`auto_reason` will return a `trace` array with each step's operation, cycle indices, note, and metrics. A `halt_trigger` field indicates why the loop stopped: `confidence_convergence`, `plateau`, or `max_steps`.
+`auto_reason` returns:
 
-## Environment Variables (Planned Overrides)
+- `trace`: structured array of steps (operation, H/L cycles, note, metrics)
+- `halt_trigger`: one of `confidence_convergence`, `plateau`, `max_steps`
+- `diagnostics`: uniform block also returned for non‑auto operations
 
-Upcoming support (not yet active) for:
+Textual trace emission is suppressed by default; set `HRM_INCLUDE_TEXT_TRACE=true` to append a human‑readable trace summary to `content`.
 
-| Variable | Purpose |
-|----------|---------|
-| HRM_CONFIDENCE_THRESHOLD | Override default convergence threshold |
-| HRM_CONVERGENCE_THRESHOLD | Alias / future decomposition override |
-| HRM_MAX_AUTO_STEPS | Cap for auto reasoning steps |
+Halting occurs when either:
+
+1. Confidence ≥ minimum (0.8) AND convergence ≥ configured threshold (default / env / per request), or
+2. A confidence plateau persists: improvement < delta across a sliding window, repeated enough times.
+
+Plateau detection is governed by:
+
+- Window length: `PLATEAU_WINDOW` (env override `HRM_PLATEAU_WINDOW`, 2–20)
+- Improvement delta: `PLATEAU_DELTA` (env override `HRM_PLATEAU_DELTA`, 0.001–0.1)
+- Required consecutive plateau confirmations: internal constant (currently 2 increments → 3 evaluations)
+
+## Diagnostics
+
+Every response (success or error) includes a `diagnostics` object:
+
+```jsonc
+{
+  "diagnostics": {
+    "plateau_count": 1,                // number of consecutive plateau confirmations
+    "confidence_window": [0.10,0.11,0.12] // rolling confidence scores retained for plateau logic
+  }
+}
+```
+
+Use these values to visualize momentum, adapt UI prompts, or trigger client‑side interventions.
 
 ## VS Code / MCP Client Integration
 
@@ -63,13 +88,13 @@ Example Claude Desktop config:
 
 ```json
 {
-	"mcpServers": {
-		"hierarchicalreasoning": {
-			"command": "npx",
-			"args": ["-y", "@modelcontextprotocol/server-hierarchical-reasoning"],
-			"env": { "HRM_DEBUG": "true" }
-		}
-	}
+  "mcpServers": {
+    "hierarchicalreasoning": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-hierarchical-reasoning"],
+      "env": { "HRM_DEBUG": "true" }
+    }
+  }
 }
 ```
 
@@ -77,12 +102,12 @@ Local (unpublished) build reference:
 
 ```json
 {
-	"mcpServers": {
-		"hierarchicalreasoning": {
-			"command": "node",
-			"args": ["/ABSOLUTE/PATH/TO/src/HRM/dist/index.js"]
-		}
-	}
+  "mcpServers": {
+    "hierarchicalreasoning": {
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/src/HRM/dist/index.js"]
+    }
+  }
 }
 ```
 
@@ -117,13 +142,15 @@ npx mcp-server-hierarchical-reasoning
 
 ### Environment Variable Overrides
 
-Currently honored:
+Implemented:
 
 | Variable | Effect |
 |----------|--------|
-| HRM_CONVERGENCE_THRESHOLD / HRM_CONFIDENCE_THRESHOLD | Sets default `convergence_threshold` if not provided in request (0.5–0.99) |
-| HRM_SESSION_TTL_MS | Override session TTL eviction window |
-| HRM_PLATEAU_WINDOW | Override number of evaluation points considered for plateau detection (2–20, default 3) |
+| HRM_CONVERGENCE_THRESHOLD / HRM_CONFIDENCE_THRESHOLD | Default convergence threshold if request omits `convergence_threshold` (0.5–0.99) |
+| HRM_SESSION_TTL_MS | Session eviction window (ms) |
+| HRM_PLATEAU_WINDOW | Sliding window length for plateau detection (2–20, default 3) |
+| HRM_PLATEAU_DELTA | Minimum confidence improvement to avoid plateau (0.001–0.1, default 0.02) |
+| HRM_INCLUDE_TEXT_TRACE | When `true`, append human‑readable auto reasoning trace to response content |
 
 Planned:
 
@@ -159,9 +186,9 @@ MIT
 
 ## Citation
 
-This epository is used to develop a new experimental MCP server implementation based on the method described in:
+This repository is used to develop a new experimental MCP server implementation based on the method described in:
 
-```
+```bibtex
 @misc{wang2025hierarchicalreasoningmodel,
       title={Hierarchical Reasoning Model}, 
       author={Guan Wang and Jin Li and Yuhao Sun and Xing Chen and Changling Liu and Yue Wu and Meng Lu and Sen Song and Yasin Abbasi Yadkori},

@@ -225,7 +225,11 @@ export class HierarchicalReasoningEngine {
       },
     ];
 
-    if (extras.trace && extras.trace.length) {
+    const shouldIncludeTraceText =
+      Boolean(extras.trace && extras.trace.length) &&
+      (process.env.HRM_INCLUDE_TEXT_TRACE || "").toLowerCase() === "true";
+
+    if (shouldIncludeTraceText && extras.trace) {
       content.push({
         type: "text",
         text: `Auto reasoning trace:\n${extras.trace
@@ -262,6 +266,10 @@ export class HierarchicalReasoningEngine {
     if (extras.haltTrigger) {
       response.halt_trigger = extras.haltTrigger;
     }
+    response.diagnostics = {
+      plateau_count: session.plateauCount ?? 0,
+      confidence_window: [...(session.metricHistory ?? [])],
+    };
     return response;
   }
 
@@ -286,6 +294,10 @@ export class HierarchicalReasoningEngine {
       session_id: session.sessionId,
       isError: true,
       error_message: error instanceof Error ? error.message : String(error),
+      diagnostics: {
+        plateau_count: session.plateauCount ?? 0,
+        confidence_window: [...(session.metricHistory ?? [])],
+      },
     };
   }
 

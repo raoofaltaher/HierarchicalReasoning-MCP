@@ -21,7 +21,7 @@ export const HRMParametersSchema = z.object({
   max_h_cycles: z.number().int().positive().max(20).default(4),
   confidence_score: z.number().min(0).max(1).optional(),
   complexity_estimate: z.number().min(1).max(10).optional(),
-  convergence_threshold: z.number().min(0.5).max(0.99).default(0.85),
+  convergence_threshold: z.number().min(0.5).max(0.99).optional(),
   h_context: z.string().optional(),
   l_context: z.string().optional(),
   solution_candidates: z.array(z.string()).optional(),
@@ -89,6 +89,10 @@ export interface HRMResponse {
   halt_trigger?: HaltTrigger;
   isError?: boolean;
   error_message?: string;
+  diagnostics?: {
+    plateau_count: number;
+    confidence_window: number[];
+  };
 }
 
 export interface AutoReasoningTraceEntry {

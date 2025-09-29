@@ -9,16 +9,17 @@ globs: *
 
 ## 0. Project Snapshot
 
-| Aspect                  | Status                                                                             |
-| ----------------------- | ---------------------------------------------------------------------------------- |
-| Core Reasoning Loop     | Implemented (H/L cycles, auto mode)                                                |
-| Framework Detection     | React, Next.js (basic), Express, Prisma, PostgreSQL (with placeholders for others) |
-| Adaptive Metrics        | Heuristic (density + diversity + candidate strength)                               |
-| Plateau / Halting Logic | Implemented (confidence + convergence + plateau)                                   |
-| Semantic / Embeddings   | Not yet (planned Medium/Long term)                                                 |
-| Persistence             | In-memory only (session map)                                                       |
-| Tests                   | Initial Vitest suite (TTL eviction, halt triggers, duplicate guard)                |
-| Docs                    | Actively maintained (this guide + implementation plan kept current)                |
+| Aspect                  | Status                                                                                             |
+| ----------------------- | -------------------------------------------------------------------------------------------------- |
+| Core Reasoning Loop     | Implemented (H/L cycles, auto mode, structured trace; optional textual trace via env toggle)       |
+| Framework Detection     | React, Next.js (basic), Express, Prisma, PostgreSQL (with placeholders for others)                 |
+| Adaptive Metrics        | Heuristic (density + diversity + candidate strength)                                               |
+| Plateau / Halting Logic | Implemented (confidence + convergence OR plateau; window & delta runtime overridable)              |
+| Semantic / Embeddings   | Not yet (planned Medium/Long term)                                                                 |
+| Persistence             | In-memory only (session map)                                                                       |
+| Tests                   | Expanded Vitest suite (TTL eviction, halt triggers, plateau window/delta, detectors, enrichment)   |
+| Diagnostics             | Exposed (plateau_count, confidence window history) in all responses                                |
+| Docs                    | Actively maintained (instructions + README synced with recent env overrides & diagnostics)         |
 
 ## 1. Architecture Overview
 
@@ -69,17 +70,23 @@ Planned Enhancements (Medium+): semantic similarity, confidence decomposition, e
 
 ### Immediate (High Value / Low Effort)
 
-1. Extend unit coverage to metrics heuristics, suggestions pipeline, and framework detectors.
-2. Add integration test simulating multi-framework workspace for `auto_reason`.
-3. Document trace/halt metadata in `README.md` and server usage examples.
-4. Introduce coverage reporting + CI gate using Vitest.
+1. Add integration test simulating multi-framework workspace for `auto_reason` (pending).
+2. Introduce coverage reporting + CI gate using Vitest.
+3. Add CLI utility to dump last session diagnostics/trace (debug aid).
+4. Documentation polish: usage examples for diagnostics & plateau tuning.
 
 ### Recently Completed
 
-- Auto-generated tool schema derived from `HRMParametersSchema` (no manual drift).
-- Session TTL eviction with configurable override.
-- Structured trace array + explicit halt trigger rationale.
-- Duplicate low-level thought guard to suppress repeated steps.
+- Auto-generated tool schema derived from `HRMParametersSchema` (no manual drift)
+- Session TTL eviction with configurable override
+- Structured trace array + explicit halt trigger rationale
+- Duplicate low-level thought guard to suppress repeated steps
+- Runtime plateau window override (`HRM_PLATEAU_WINDOW`)
+- Runtime plateau delta override (`HRM_PLATEAU_DELTA`)
+- Optional textual auto trace emission (`HRM_INCLUDE_TEXT_TRACE`)
+- Diagnostics block (plateau_count, confidence_window) added to responses
+- Convergence threshold made request-optional; env override (`HRM_CONVERGENCE_THRESHOLD` / alias) respected
+- Expanded test suite (metrics heuristics, plateau variants, detectors, env overrides, framework enrichment, error handling)
 
 ### Short Term
 
@@ -105,9 +112,10 @@ Planned Enhancements (Medium+): semantic similarity, confidence decomposition, e
 
 ### Quick Wins (Candidate Next Patch Set)
 
-- Expand unit suite to cover metrics regression cases.
-- Add lint task ensuring docs stay synced with schema fields.
-- Small CLI utility to dump latest reasoning trace for debugging.
+- Integration test across mixed framework workspace (React + Express + Prisma) to validate combined guidance
+- Coverage threshold enforcement in CI (e.g. 80%)
+- CLI/Tool: export last N evaluations + halting rationale
+- Lint / script to verify README env var tables mirror constants & engine wiring
 
 ## 5. Coding Conventions (Supplemental Project-Specific)
 
@@ -156,11 +164,14 @@ PR Requirements:
 
 ## 11. Decision Log (Recent)
 
-| Decision                                  | Date    | Rationale                                                     |
-| ----------------------------------------- | ------- | ------------------------------------------------------------- |
-| Heuristic coverage metrics only (phase 2) | Current | Faster bootstrap; avoids premature embedding dependency       |
-| Plateau halting window = 3                | Current | Balances noise vs responsiveness                              |
-| Confidence threshold default 0.8          | Current | Aligns with convergence heuristic and reduces premature halts |
+| Decision                                          | Date    | Rationale                                                                  |
+| ------------------------------------------------- | ------- | ---------------------------------------------------------------------------- |
+| Heuristic coverage metrics only (phase 2)         | Current | Faster bootstrap; avoids premature embedding dependency                      |
+| Plateau halting window base = 3 (overridable)     | Current | Balances noise vs responsiveness; allows tuning via env                      |
+| Plateau delta base = 0.02 (overridable)           | Current | Ensures meaningful progress; tunable for noisy scenarios                     |
+| Confidence threshold default env-overridable      | Current | Allows adaptive convergence criteria per deployment                          |
+| Textual auto trace opt-in via env toggle          | Current | Reduces response verbosity in default mode                                  |
+| Diagnostics always included in responses          | Current | Enables clients to adapt UI/prompts without extra calls                     |
 
 ## 12. Future Extensibility Hooks
 
