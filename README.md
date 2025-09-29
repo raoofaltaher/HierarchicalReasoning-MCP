@@ -20,20 +20,20 @@ Hierarchical Reasoning MCP (HRM) is a neuroscience‑inspired dual‑layer reaso
 Install globally (recommended if you want the CLI on your PATH):
 
 ```bash
-npm install -g @modelcontextprotocol/server-hierarchical-reasoning
+npm install -g hierarchical-reasoning-mcp
 mcp-server-hierarchical-reasoning --help
 ```
 
 Use directly with npx (no global install):
 
 ```bash
-npx @modelcontextprotocol/server-hierarchical-reasoning@latest
+npx hierarchical-reasoning-mcp@latest
 ```
 
 Add as a dev dependency:
 
 ```bash
-npm install --save-dev @modelcontextprotocol/server-hierarchical-reasoning
+npm install --save-dev hierarchical-reasoning-mcp
 ```
 
 After installation the binary `mcp-server-hierarchical-reasoning` is available (globally or in `node_modules/.bin`).
