@@ -9,6 +9,15 @@ import { computeReasoningMetrics } from "../utils/metrics.js";
 import { log } from "../utils/logging.js";
 import { HaltTrigger, HierarchicalState, HRMParameters, ReasoningMetrics } from "../types.js";
 
+// Runtime-adjustable plateau window via environment variable HRM_PLATEAU_WINDOW (2..20)
+const plateauWindow: number = (() => {
+  const raw = process.env.HRM_PLATEAU_WINDOW;
+  if (!raw) return PLATEAU_WINDOW;
+  const parsed = parseInt(raw, 10);
+  if (Number.isNaN(parsed)) return PLATEAU_WINDOW;
+  return Math.min(20, Math.max(2, parsed));
+})();
+
 export const handleEvaluate = (state: HierarchicalState, params: HRMParameters): ReasoningMetrics => {
   if (typeof params.confidence_score === "number") {
     state.metrics.confidenceScore = params.confidence_score;
@@ -21,11 +30,11 @@ export const handleEvaluate = (state: HierarchicalState, params: HRMParameters):
 
   state.metricHistory = state.metricHistory ?? [];
   state.metricHistory.push(metrics.confidenceScore);
-  if (state.metricHistory.length > PLATEAU_WINDOW) {
+  if (state.metricHistory.length > plateauWindow) {
     state.metricHistory.shift();
   }
 
-  if (state.metricHistory.length >= PLATEAU_WINDOW) {
+  if (state.metricHistory.length >= plateauWindow) {
     const first = state.metricHistory[0];
     const last = state.metricHistory[state.metricHistory.length - 1];
     const improvement = last - first;
@@ -63,7 +72,7 @@ export const handleHaltCheck = (state: HierarchicalState): {
     trigger = "confidence_convergence";
   }
   const rationale = plateauReady
-    ? `Halting due to confidence plateau (Δ < ${PLATEAU_DELTA} across ${PLATEAU_WINDOW} evaluations).`
+    ? `Halting due to confidence plateau (Δ < ${PLATEAU_DELTA} across ${plateauWindow} evaluations).`
     : shouldHalt
       ? "Conditions met for halting"
       : `Continue reasoning: confidence ${confidenceScore.toFixed(2)}, convergence ${convergenceScore.toFixed(2)}`;

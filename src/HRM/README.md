@@ -123,6 +123,7 @@ Currently honored:
 |----------|--------|
 | HRM_CONVERGENCE_THRESHOLD / HRM_CONFIDENCE_THRESHOLD | Sets default `convergence_threshold` if not provided in request (0.5–0.99) |
 | HRM_SESSION_TTL_MS | Override session TTL eviction window |
+| HRM_PLATEAU_WINDOW | Override number of evaluation points considered for plateau detection (2–20, default 3) |
 
 Planned:
 
@@ -130,7 +131,44 @@ Planned:
 |----------|---------|
 | HRM_MAX_AUTO_STEPS | External cap for auto reasoning total steps (future wiring) |
 
+
+
+## 🤝 Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for information about contributing to this repository.
+
+## 🔒 Security
+
+See [SECURITY.md](SECURITY.md) for reporting security vulnerabilities.
+
+## 📜 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 💬 Community
+
+- [GitHub Discussions](https://github.com/raoofaltaher/discussions)
+
+## ⭐ Support
+
+If you find MCP servers useful, please consider starring the repository and contributing new servers or improvements!
+
 ## License
 
 MIT
 
+## Citation
+
+This epository is used to develop a new experimental MCP server implementation based on the method described in:
+
+```
+@misc{wang2025hierarchicalreasoningmodel,
+      title={Hierarchical Reasoning Model}, 
+      author={Guan Wang and Jin Li and Yuhao Sun and Xing Chen and Changling Liu and Yue Wu and Meng Lu and Sen Song and Yasin Abbasi Yadkori},
+      year={2025},
+      eprint={2506.21734},
+      archivePrefix={arXiv},
+      primaryClass={cs.AI},
+      url={https://arxiv.org/abs/2506.21734}, 
+}
+```
