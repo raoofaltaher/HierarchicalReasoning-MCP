@@ -23,6 +23,14 @@ describe("framework enrichment", () => {
         }
       },
     }));
+    // Mock security validation to allow test paths
+    vi.mock("../utils/security.js", () => ({
+      validateWorkspacePath: vi.fn((path: string) => {
+        // Allow test paths to pass validation
+        return;
+      }),
+      validateThoughtLength: vi.fn((thought: string) => thought),
+    }));
   });
 
   afterEach(() => {

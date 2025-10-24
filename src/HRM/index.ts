@@ -187,7 +187,13 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     const parsed = HRMParametersSchema.parse(request.params.arguments ?? {});
-    return engine.handleRequest(parsed) as any;
+    const result = await engine.handleRequest(parsed);
+    
+    // Map HRMResponse to CallToolResult (MCP SDK expected type)
+    return {
+      content: result.content,
+      isError: result.isError ?? false,
+    };
   } catch (error) {
     if (error instanceof ZodError) {
       return {

@@ -6,6 +6,7 @@ import { handleEvaluate, handleHaltCheck } from "./operations/evaluation.js";
 import { handleHighLevelPlan, handleHighLevelUpdate } from "./operations/highLevel.js";
 import { handleLowLevelExecution } from "./operations/lowLevel.js";
 import { SessionManager } from "./state.js";
+import { validateWorkspacePath } from "./utils/security.js";
 import {
   AutoReasoningTraceEntry,
   HaltTrigger,
@@ -19,6 +20,7 @@ import {
   AUTO_REASONING_OPERATIONS,
   MAX_AUTO_REASONING_STEPS,
   PROBLEM_SUMMARY_TEMPLATE,
+  AUTO_REASON_TIMEOUT_MS,
 } from "./constants.js";
 import { FrameworkReasoningManager } from "./frameworks/index.js";
 
@@ -87,11 +89,34 @@ export class HierarchicalReasoningEngine {
 
     let lastOperation: HRMOperation = "h_plan";
     let iterations = 0;
+    const startTime = Date.now();
+    
     const pushTrace = (entry: Omit<AutoReasoningTraceEntry, "step">) => {
       trace.push({ step: ++step, ...entry });
     };
+    
     while (iterations < MAX_AUTO_REASONING_STEPS) {
       iterations += 1;
+      
+      // Security: Check for timeout to prevent long-running operations
+      const elapsed = Date.now() - startTime;
+      if (elapsed > AUTO_REASON_TIMEOUT_MS) {
+        log("warn", "Auto reasoning timeout reached", {
+          sessionId: session.sessionId,
+          iterations,
+          elapsed_ms: elapsed,
+          timeout_ms: AUTO_REASON_TIMEOUT_MS,
+        });
+        haltTrigger = "max_steps";
+        pushTrace({
+          operation: "halt_check",
+          hCycle: session.hCycle,
+          lCycle: session.lCycle,
+          note: `Auto reasoning halted: timeout after ${elapsed}ms (limit ${AUTO_REASON_TIMEOUT_MS}ms)`,
+          metrics: session.metrics,
+        });
+        break;
+      }
       const nextOp: HRMOperation = AUTO_REASONING_OPERATIONS.includes(lastOperation)
         ? suggestNextOperation(session, lastOperation)
         : "h_plan";
@@ -317,13 +342,31 @@ export class HierarchicalReasoningEngine {
       return;
     }
 
+    // Security: Validate workspace path before framework detection
+    let validatedPath: string | undefined;
+    if (workspacePath) {
+      try {
+        validatedPath = validateWorkspacePath(workspacePath);
+      } catch (error) {
+        log("error", "Workspace path validation failed", {
+          path: workspacePath,
+          error: error instanceof Error ? error.message : String(error),
+        });
+        // Don't throw - gracefully skip framework detection if path is invalid
+        session.frameworkNotes.push(
+          `Framework detection skipped: ${error instanceof Error ? error.message : "Invalid workspace path"}`
+        );
+        return;
+      }
+    }
+
     const response = await this.frameworkManager.generateReasoning({
-      workspacePath,
+      workspacePath: validatedPath,
       problem: problem ?? undefined,
     });
 
-    if (workspacePath) {
-      session.workspacePath = workspacePath;
+    if (validatedPath) {
+      session.workspacePath = validatedPath;
     }
 
     if (response.insight) {

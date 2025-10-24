@@ -8,8 +8,10 @@ import {
   INITIAL_METRICS,
   MAX_PENDING_ACTIONS,
   MAX_RECENT_DECISIONS,
+  MAX_SESSIONS,
 } from "./constants.js";
 import { HierarchicalState, HRMParameters, HRMOperation } from "./types.js";
+import { log } from "./utils/logging.js";
 
 const cloneMetrics = () => ({ ...INITIAL_METRICS });
 
@@ -82,12 +84,43 @@ export class SessionManager {
     }
   }
 
+  /**
+   * Security: Evict least recently used sessions when MAX_SESSIONS limit is reached.
+   * Prevents DoS attacks via unlimited session creation.
+   */
+  private evictLRUIfNeeded() {
+    if (this.sessions.size < MAX_SESSIONS) {
+      return;
+    }
+
+    // Find least recently used session (oldest lastUpdated)
+    let oldestSessionId: string | null = null;
+    let oldestTimestamp = Infinity;
+
+    for (const [sessionId, session] of this.sessions.entries()) {
+      if (session.lastUpdated < oldestTimestamp) {
+        oldestTimestamp = session.lastUpdated;
+        oldestSessionId = sessionId;
+      }
+    }
+
+    if (oldestSessionId) {
+      log("warn", "Session limit reached, evicting LRU session", {
+        evicted_session_id: oldestSessionId,
+        session_count: this.sessions.size,
+        max_sessions: MAX_SESSIONS,
+      });
+      this.sessions.delete(oldestSessionId);
+    }
+  }
+
   sweepExpiredSessions(now = Date.now()) {
     this.evictExpired(now);
   }
 
   getOrCreate(params: HRMParameters): HierarchicalState {
     this.evictExpired();
+    this.evictLRUIfNeeded(); // Security: Enforce session limit
     const requestedId = params.session_id;
     const shouldReset = params.reset_state;
 
@@ -146,5 +179,19 @@ export class SessionManager {
 
   getState(sessionId: string) {
     return this.sessions.get(sessionId);
+  }
+
+  /**
+   * Get the current number of active sessions (for testing)
+   */
+  size(): number {
+    return this.sessions.size;
+  }
+
+  /**
+   * Get all session IDs (for testing)
+   */
+  getAllSessionIds(): string[] {
+    return Array.from(this.sessions.keys());
   }
 }
