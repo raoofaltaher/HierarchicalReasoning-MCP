@@ -3,7 +3,7 @@ import { appendContext, contextToText } from "./utils/text.js";
 import { log, logState } from "./utils/logging.js";
 import { handleCycleProgression, suggestNextOperation } from "./utils/suggestions.js";
 import { handleEvaluate, handleHaltCheck } from "./operations/evaluation.js";
-import { handleHighLevelPlan, handleHighLevelUpdate } from "./operations/highLevel.ts";
+import { handleHighLevelPlan, handleHighLevelUpdate } from "./operations/highLevel.js";
 import { handleLowLevelExecution } from "./operations/lowLevel.js";
 import { SessionManager, calculatePerformanceAggregates } from "./state.js";
 import { validateWorkspacePath } from "./utils/security.js";
@@ -180,7 +180,7 @@ export class HierarchicalReasoningEngine {
       session,
       "auto_reason",
       JSON.stringify(trace, null, 2),
-      suggestNextOperation(session, lastOperation),
+      suggestNextOperation(session, lastOperation ?? "h_plan"),
       {
         trace,
         haltTrigger,

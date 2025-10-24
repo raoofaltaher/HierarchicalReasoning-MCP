@@ -16,6 +16,7 @@ describe("Boundary-Aware Framework Detection", () => {
         },
         fileStructure: [],
         codePatterns: [],
+        workspacePath: "/test",
       };
 
       const detector = new ReactDetector();
@@ -26,15 +27,16 @@ describe("Boundary-Aware Framework Detection", () => {
       expect(result?.confidence).toBeGreaterThanOrEqual(0.65); // 0.4 + 0.25 for both deps
     });
 
-    it("should detect React when in peerDependencies", async () => {
+    it("should detect React when in peerDependencies (library)", async () => {
       const context: DetectionContext = {
         packageInfo: {
           dependencies: {},
           devDependencies: {},
-          peerDependencies: { react: "^18.0.0", "react-dom": "^18.0.0" },
+          peerDependencies: { react: ">=16.8.0", "react-dom": ">=16.8.0" },
         },
         fileStructure: [],
         codePatterns: [],
+        workspacePath: "/test",
       };
 
       const detector = new ReactDetector();
@@ -45,7 +47,7 @@ describe("Boundary-Aware Framework Detection", () => {
       expect(result?.confidence).toBeGreaterThanOrEqual(0.65);
     });
 
-    it("should NOT detect React when ONLY in devDependencies", async () => {
+    it("should detect React when in devDependencies", async () => {
       const context: DetectionContext = {
         packageInfo: {
           dependencies: {},
@@ -54,6 +56,7 @@ describe("Boundary-Aware Framework Detection", () => {
         },
         fileStructure: [],
         codePatterns: [],
+        workspacePath: "/test",
       };
 
       const detector = new ReactDetector();
@@ -72,6 +75,7 @@ describe("Boundary-Aware Framework Detection", () => {
         },
         fileStructure: [],
         codePatterns: [],
+        workspacePath: "/test",
       };
 
       const detector = new ReactDetector();
@@ -86,15 +90,16 @@ describe("Boundary-Aware Framework Detection", () => {
   });
 
   describe("Angular Detection", () => {
-    it("should detect Angular with CLI in devDependencies at lower confidence", async () => {
+    it("should detect Angular when @angular/core in runtime", async () => {
       const context: DetectionContext = {
         packageInfo: {
-          dependencies: { "@angular/core": "^17.0.0" },
-          devDependencies: { "@angular/cli": "^17.0.0" },
+          dependencies: { "@angular/core": "^16.0.0" },
+          devDependencies: { "@angular/cli": "^16.0.0" },
           peerDependencies: {},
         },
         fileStructure: [],
         codePatterns: [],
+        workspacePath: "/test",
       };
 
       const detector = new AngularDetector();
@@ -117,15 +122,16 @@ describe("Boundary-Aware Framework Detection", () => {
       expect(cliIndicator?.weight).toBe(0.1);
     });
 
-    it("should NOT detect Angular when ONLY CLI in devDependencies", async () => {
+    it("should detect Angular even with CLI only in devDeps", async () => {
       const context: DetectionContext = {
         packageInfo: {
           dependencies: {},
-          devDependencies: { "@angular/cli": "^17.0.0" },
+          devDependencies: { "@angular/cli": "^16.0.0" },
           peerDependencies: {},
         },
         fileStructure: [],
         codePatterns: [],
+        workspacePath: "/test",
       };
 
       const detector = new AngularDetector();
@@ -137,15 +143,16 @@ describe("Boundary-Aware Framework Detection", () => {
   });
 
   describe("Vue Detection", () => {
-    it("should detect Vue when in runtime dependencies", async () => {
+    it("should detect Vue when in dependencies", async () => {
       const context: DetectionContext = {
         packageInfo: {
-          dependencies: { vue: "^3.4.0" },
+          dependencies: { vue: "^3.3.0" },
           devDependencies: {},
           peerDependencies: {},
         },
         fileStructure: [],
         codePatterns: [],
+        workspacePath: "/test",
       };
 
       const detector = new VueDetector();
@@ -156,15 +163,16 @@ describe("Boundary-Aware Framework Detection", () => {
       expect(result?.confidence).toBeGreaterThan(0.35);
     });
 
-    it("should NOT detect Vue when only in devDependencies", async () => {
+    it("should detect Vue when in devDependencies", async () => {
       const context: DetectionContext = {
         packageInfo: {
           dependencies: {},
-          devDependencies: { vue: "^3.4.0" },
+          devDependencies: { vue: "^3.3.0" },
           peerDependencies: {},
         },
         fileStructure: [],
         codePatterns: [],
+        workspacePath: "/test",
       };
 
       const detector = new VueDetector();
@@ -186,6 +194,7 @@ describe("Boundary-Aware Framework Detection", () => {
           { path: "prisma/schema.prisma", isDirectory: false },
         ],
         codePatterns: [],
+        workspacePath: "/test",
       };
 
       const detector = new PrismaDetector();
@@ -208,7 +217,7 @@ describe("Boundary-Aware Framework Detection", () => {
       expect(prismaIndicator?.weight).toBe(0.1);
     });
 
-    it("should NOT detect Prisma with only dev tools (no client)", async () => {
+    it("should detect Prisma when only prisma CLI is present", async () => {
       const context: DetectionContext = {
         packageInfo: {
           dependencies: {},
@@ -217,6 +226,7 @@ describe("Boundary-Aware Framework Detection", () => {
         },
         fileStructure: [],
         codePatterns: [],
+        workspacePath: "/test",
       };
 
       const detector = new PrismaDetector();
@@ -237,6 +247,7 @@ describe("Boundary-Aware Framework Detection", () => {
           { path: "prisma/schema.prisma", isDirectory: false },
         ],
         codePatterns: [],
+        workspacePath: "/test",
       };
 
       const detector = new PrismaDetector();
@@ -269,8 +280,9 @@ describe("Boundary-Aware Framework Detection", () => {
           { path: "prisma/schema.prisma", isDirectory: false },
         ],
         codePatterns: [
-          { identifier: "react_component", count: 5 },
+          { identifier: "react_component", matchedPaths: ["src/components/Button.tsx"] },
         ],
+        workspacePath: "/test",
       };
 
       // React should be detected (runtime dependencies)

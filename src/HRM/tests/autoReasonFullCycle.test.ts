@@ -174,9 +174,9 @@ describe("Auto Reasoning Full Cycle Integration", () => {
 
     // 10. Verify diagnostics are present
     expect(response.diagnostics).toBeDefined();
-    expect(response.diagnostics.plateau_count).toBeDefined();
-    expect(response.diagnostics.confidence_window).toBeDefined();
-    expect(Array.isArray(response.diagnostics.confidence_window)).toBe(true);
+    expect(response.diagnostics?.plateau_count).toBeDefined();
+    expect(response.diagnostics?.confidence_window).toBeDefined();
+    expect(Array.isArray(response.diagnostics?.confidence_window)).toBe(true);
   });
 
   it("should produce coherent reasoning narrative in trace notes", async () => {
