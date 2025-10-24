@@ -8,13 +8,13 @@ export class VueDetector extends FrameworkDetector {
         type: "dependency",
         pattern: "vue",
         weight: 0.4,
-        matched: this.hasDependency(context, "vue"),
+        matched: this.hasRuntimeDependency(context, "vue"),
       },
       {
         type: "dependency",
         pattern: "@vue/composition-api",
         weight: 0.2,
-        matched: this.hasDependency(context, "@vue/composition-api"),
+        matched: this.hasRuntimeDependency(context, "@vue/composition-api"),
       },
       {
         type: "file_pattern",
@@ -35,6 +35,11 @@ export class VueDetector extends FrameworkDetector {
         matched: this.hasCodePattern(context, "vue_component"),
       },
     ];
+
+    const confidence = this.calculateConfidence(indicators);
+    if (confidence < 0.35) {
+      return null;
+    }
 
     const version = this.getVersion(context, "vue");
     const capabilities: FrameworkCapability[] = [
@@ -136,11 +141,6 @@ export class VueDetector extends FrameworkDetector {
     return this.buildSignature("Vue.js", version, indicators, capabilities);
   }
 
-  private hasDependency(context: DetectionContext, name: string): boolean {
-    const { dependencies, devDependencies, peerDependencies } = context.packageInfo;
-    return Boolean(dependencies?.[name] || devDependencies?.[name] || peerDependencies?.[name]);
-  }
-
   private hasFileContaining(context: DetectionContext, pattern: RegExp): boolean {
     return context.fileStructure.some((node) => pattern.test(node.path));
   }
@@ -150,10 +150,6 @@ export class VueDetector extends FrameworkDetector {
   }
 
   private getVersion(context: DetectionContext, dependency: string): string | undefined {
-    return (
-      context.packageInfo.dependencies?.[dependency] ||
-      context.packageInfo.devDependencies?.[dependency] ||
-      context.packageInfo.peerDependencies?.[dependency]
-    );
+    return this.getRuntimeDependencyVersion(context, dependency);
   }
 }

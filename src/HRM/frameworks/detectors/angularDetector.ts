@@ -8,13 +8,13 @@ export class AngularDetector extends FrameworkDetector {
         type: "dependency",
         pattern: "@angular/core",
         weight: 0.4,
-        matched: this.hasDependency(context, "@angular/core"),
+        matched: this.hasRuntimeDependency(context, "@angular/core"),
       },
       {
-        type: "dependency",
+        type: "dev_tool",
         pattern: "@angular/cli",
-        weight: 0.2,
-        matched: this.hasDependency(context, "@angular/cli"),
+        weight: 0.1,
+        matched: this.hasDevDependency(context, "@angular/cli"),
       },
       {
         type: "file_pattern",
@@ -35,6 +35,11 @@ export class AngularDetector extends FrameworkDetector {
         matched: this.hasCodePattern(context, "angular_component"),
       },
     ];
+
+    const confidence = this.calculateConfidence(indicators);
+    if (confidence < 0.35) {
+      return null;
+    }
 
     const version = this.getVersion(context, "@angular/core");
     const capabilities: FrameworkCapability[] = [
@@ -133,11 +138,6 @@ export class AngularDetector extends FrameworkDetector {
     return this.buildSignature("Angular", version, indicators, capabilities);
   }
 
-  private hasDependency(context: DetectionContext, name: string): boolean {
-    const { dependencies, devDependencies, peerDependencies } = context.packageInfo;
-    return Boolean(dependencies?.[name] || devDependencies?.[name] || peerDependencies?.[name]);
-  }
-
   private hasFileContaining(context: DetectionContext, pattern: RegExp): boolean {
     return context.fileStructure.some((node) => pattern.test(node.path));
   }
@@ -147,10 +147,6 @@ export class AngularDetector extends FrameworkDetector {
   }
 
   private getVersion(context: DetectionContext, dependency: string): string | undefined {
-    return (
-      context.packageInfo.dependencies?.[dependency] ||
-      context.packageInfo.devDependencies?.[dependency] ||
-      context.packageInfo.peerDependencies?.[dependency]
-    );
+    return this.getRuntimeDependencyVersion(context, dependency);
   }
 }

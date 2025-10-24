@@ -11,13 +11,13 @@ export class ExpressDetector extends FrameworkDetector {
         type: "dependency",
         pattern: "express",
         weight: 0.5,
-        matched: this.hasDependency(context, "express"),
+        matched: this.hasRuntimeDependency(context, "express"),
       },
       {
         type: "dependency",
         pattern: "cors",
         weight: 0.15,
-        matched: this.hasDependency(context, "cors") || this.hasDependency(context, "body-parser"),
+        matched: this.hasRuntimeDependency(context, "cors") || this.hasRuntimeDependency(context, "body-parser"),
       },
       {
         type: "file_pattern",
@@ -73,17 +73,11 @@ export class ExpressDetector extends FrameworkDetector {
     return this.buildSignature("express", version, indicators, capabilities);
   }
 
-  private hasDependency(context: DetectionContext, dependency: string): boolean {
-    const { dependencies = {}, devDependencies = {}, peerDependencies = {} } = context.packageInfo;
-    return Boolean(dependencies[dependency] || devDependencies[dependency] || peerDependencies[dependency]);
-  }
-
   private hasFile(context: DetectionContext, pattern: RegExp): boolean {
     return context.fileStructure.some((node) => pattern.test(node.path));
   }
 
   private getVersion(context: DetectionContext, dependency: string): string | undefined {
-    const { dependencies = {}, devDependencies = {}, peerDependencies = {} } = context.packageInfo;
-    return dependencies[dependency] || devDependencies[dependency] || peerDependencies[dependency];
+    return this.getRuntimeDependencyVersion(context, dependency);
   }
 }

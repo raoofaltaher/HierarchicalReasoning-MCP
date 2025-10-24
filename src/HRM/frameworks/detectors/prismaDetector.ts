@@ -12,13 +12,13 @@ export class PrismaDetector extends FrameworkDetector {
         type: "dependency",
         pattern: "@prisma/client",
         weight: 0.45,
-        matched: this.hasDependency(context, "@prisma/client"),
+        matched: this.hasRuntimeDependency(context, "@prisma/client"),
       },
       {
-        type: "dependency",
+        type: "dev_tool",
         pattern: "prisma",
-        weight: 0.2,
-        matched: this.hasDependency(context, "prisma"),
+        weight: 0.1,
+        matched: this.hasDevDependency(context, "prisma"),
       },
       {
         type: "file_pattern",
@@ -39,7 +39,7 @@ export class PrismaDetector extends FrameworkDetector {
       return null;
     }
 
-    const version = this.getVersion(context, "@prisma/client") || this.getVersion(context, "prisma");
+    const version = this.getRuntimeDependencyVersion(context, "@prisma/client");
     const capabilities: FrameworkCapability[] = [
       {
         category: "database",
@@ -63,17 +63,7 @@ export class PrismaDetector extends FrameworkDetector {
     return this.buildSignature("prisma", version, indicators, capabilities);
   }
 
-  private hasDependency(context: DetectionContext, dependency: string): boolean {
-    const { dependencies = {}, devDependencies = {}, peerDependencies = {} } = context.packageInfo;
-    return Boolean(dependencies[dependency] || devDependencies[dependency] || peerDependencies[dependency]);
-  }
-
   private hasFile(context: DetectionContext, pattern: RegExp): boolean {
     return context.fileStructure.some((node) => pattern.test(node.path));
-  }
-
-  private getVersion(context: DetectionContext, dependency: string): string | undefined {
-    const { dependencies = {}, devDependencies = {}, peerDependencies = {} } = context.packageInfo;
-    return dependencies[dependency] || devDependencies[dependency] || peerDependencies[dependency];
   }
 }

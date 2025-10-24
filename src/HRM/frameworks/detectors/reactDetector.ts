@@ -8,13 +8,13 @@ export class ReactDetector extends FrameworkDetector {
         type: "dependency",
         pattern: "react",
         weight: 0.4,
-        matched: this.hasDependency(context, "react"),
+        matched: this.hasRuntimeDependency(context, "react"),
       },
       {
         type: "dependency",
         pattern: "react-dom",
         weight: 0.25,
-        matched: this.hasDependency(context, "react-dom"),
+        matched: this.hasRuntimeDependency(context, "react-dom"),
       },
       {
         type: "file_pattern",
@@ -83,11 +83,6 @@ export class ReactDetector extends FrameworkDetector {
     return this.buildSignature("react", version, indicators, capabilities);
   }
 
-  private hasDependency(context: DetectionContext, name: string): boolean {
-    const { dependencies, devDependencies, peerDependencies } = context.packageInfo;
-    return Boolean(dependencies?.[name] || devDependencies?.[name] || peerDependencies?.[name]);
-  }
-
   private hasFileContaining(context: DetectionContext, pattern: RegExp): boolean {
     return context.fileStructure.some((node) => pattern.test(node.path));
   }
@@ -97,10 +92,6 @@ export class ReactDetector extends FrameworkDetector {
   }
 
   private getVersion(context: DetectionContext, dependency: string): string | undefined {
-    return (
-      context.packageInfo.dependencies?.[dependency] ||
-      context.packageInfo.devDependencies?.[dependency] ||
-      context.packageInfo.peerDependencies?.[dependency]
-    );
+    return this.getRuntimeDependencyVersion(context, dependency);
   }
 }

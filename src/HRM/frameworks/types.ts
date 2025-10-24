@@ -1,5 +1,6 @@
 export type DetectionIndicatorType =
   | "dependency"
+  | "dev_tool"
   | "file_pattern"
   | "code_pattern"
   | "config_file";
@@ -26,7 +27,8 @@ export interface FrameworkCapability {
     | "database"
     | "state_management"
     | "routing"
-    | "testing";
+    | "testing"
+    | "performance";
   features: string[];
   patterns: ReasoningPattern[];
 }

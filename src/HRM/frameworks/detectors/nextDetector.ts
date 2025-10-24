@@ -8,7 +8,7 @@ export class NextJSDetector extends FrameworkDetector {
         type: "dependency",
         pattern: "next",
         weight: 0.5,
-        matched: this.hasDependency(context, "next"),
+        matched: this.hasRuntimeDependency(context, "next"),
       },
       {
         type: "file_pattern",
@@ -80,11 +80,6 @@ export class NextJSDetector extends FrameworkDetector {
     return this.buildSignature("nextjs", version, indicators, capabilities);
   }
 
-  private hasDependency(context: DetectionContext, name: string): boolean {
-    const { dependencies, devDependencies, peerDependencies } = context.packageInfo;
-    return Boolean(dependencies?.[name] || devDependencies?.[name] || peerDependencies?.[name]);
-  }
-
   private hasDirectory(context: DetectionContext, pattern: RegExp): boolean {
     return context.fileStructure.some((node) => node.isDirectory && pattern.test(node.path));
   }
@@ -94,10 +89,6 @@ export class NextJSDetector extends FrameworkDetector {
   }
 
   private getVersion(context: DetectionContext, dependency: string): string | undefined {
-    return (
-      context.packageInfo.dependencies?.[dependency] ||
-      context.packageInfo.devDependencies?.[dependency] ||
-      context.packageInfo.peerDependencies?.[dependency]
-    );
+    return this.getRuntimeDependencyVersion(context, dependency);
   }
 }

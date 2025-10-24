@@ -8,13 +8,13 @@ export class NestJSDetector extends FrameworkDetector {
         type: "dependency",
         pattern: "@nestjs/core",
         weight: 0.4,
-        matched: this.hasDependency(context, "@nestjs/core"),
+        matched: this.hasRuntimeDependency(context, "@nestjs/core"),
       },
       {
         type: "dependency",
         pattern: "@nestjs/common",
         weight: 0.25,
-        matched: this.hasDependency(context, "@nestjs/common"),
+        matched: this.hasRuntimeDependency(context, "@nestjs/common"),
       },
       {
         type: "file_pattern",
@@ -35,6 +35,11 @@ export class NestJSDetector extends FrameworkDetector {
         matched: this.hasCodePattern(context, "nestjs_decorator"),
       },
     ];
+
+    const confidence = this.calculateConfidence(indicators);
+    if (confidence < 0.35) {
+      return null;
+    }
 
     const version = this.getVersion(context, "@nestjs/core");
     const capabilities: FrameworkCapability[] = [
@@ -117,11 +122,6 @@ export class NestJSDetector extends FrameworkDetector {
     return this.buildSignature("NestJS", version, indicators, capabilities);
   }
 
-  private hasDependency(context: DetectionContext, name: string): boolean {
-    const { dependencies, devDependencies, peerDependencies } = context.packageInfo;
-    return Boolean(dependencies?.[name] || devDependencies?.[name] || peerDependencies?.[name]);
-  }
-
   private hasFileContaining(context: DetectionContext, pattern: RegExp): boolean {
     return context.fileStructure.some((node) => pattern.test(node.path));
   }
@@ -131,10 +131,6 @@ export class NestJSDetector extends FrameworkDetector {
   }
 
   private getVersion(context: DetectionContext, dependency: string): string | undefined {
-    return (
-      context.packageInfo.dependencies?.[dependency] ||
-      context.packageInfo.devDependencies?.[dependency] ||
-      context.packageInfo.peerDependencies?.[dependency]
-    );
+    return this.getRuntimeDependencyVersion(context, dependency);
   }
 }

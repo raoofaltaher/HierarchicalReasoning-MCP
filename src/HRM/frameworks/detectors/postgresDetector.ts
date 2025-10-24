@@ -6,7 +6,7 @@ const POSTGRES_FILE_PATTERN = /(database|db)[\\/](migrations|seeds|queries)/i;
 
 export class PostgreSQLDetector extends FrameworkDetector {
   async detect(context: DetectionContext): Promise<FrameworkSignature | null> {
-    const dependencyMatched = POSTGRES_DEPENDENCIES.some((dep) => this.hasDependency(context, dep));
+    const dependencyMatched = POSTGRES_DEPENDENCIES.some((dep) => this.hasRuntimeDependency(context, dep));
     const indicators: DetectionResult[] = [
       {
         type: "dependency",
@@ -56,11 +56,6 @@ export class PostgreSQLDetector extends FrameworkDetector {
     return this.buildSignature("postgresql", version, indicators, capabilities);
   }
 
-  private hasDependency(context: DetectionContext, dependency: string): boolean {
-    const { dependencies = {}, devDependencies = {}, peerDependencies = {} } = context.packageInfo;
-    return Boolean(dependencies[dependency] || devDependencies[dependency] || peerDependencies[dependency]);
-  }
-
   private hasFile(context: DetectionContext, pattern: RegExp): boolean {
     return context.fileStructure.some((node) => pattern.test(node.path));
   }
@@ -71,16 +66,11 @@ export class PostgreSQLDetector extends FrameworkDetector {
 
   private getDependencyVersion(context: DetectionContext, candidates: string[]): string | undefined {
     for (const candidate of candidates) {
-      const version = this.getVersion(context, candidate);
+      const version = this.getRuntimeDependencyVersion(context, candidate);
       if (version) {
         return version;
       }
     }
     return undefined;
-  }
-
-  private getVersion(context: DetectionContext, dependency: string): string | undefined {
-    const { dependencies = {}, devDependencies = {}, peerDependencies = {} } = context.packageInfo;
-    return dependencies[dependency] || devDependencies[dependency] || peerDependencies[dependency];
   }
 }
