@@ -221,12 +221,31 @@ Every response (success or error) includes a `diagnostics` object:
 {
   "diagnostics": {
     "plateau_count": 1,                // number of consecutive plateau confirmations
-    "confidence_window": [0.10,0.11,0.12] // rolling confidence scores retained for plateau logic
+    "confidence_window": [0.10,0.11,0.12], // rolling confidence scores retained for plateau logic
+    "performance": {                   // optional: timing and thought metrics (added v0.1.0)
+      "totalDuration": 123.45,         // total ms for auto_reason (if applicable)
+      "cycleDurations": [2.3, 1.8, 2.1], // ms per operation cycle
+      "avgCycleDuration": 2.07,        // mean cycle time
+      "hThoughtLengths": [120, 145],   // characters per h_thought
+      "lThoughtLengths": [89, 92, 95], // characters per l_thought
+      "avgHThoughtLength": 132.5,      // mean h_thought length
+      "avgLThoughtLength": 92.0,       // mean l_thought length
+      "contextGrowthRatios": [0.15, 0.08], // context size growth per cycle
+      "avgContextGrowth": 0.115,       // mean growth ratio
+      "totalCycles": 5                 // total operations executed
+    }
   }
 }
 ```
 
-Use these values to visualize momentum, adapt UI prompts, or trigger client‑side interventions.
+**Interpreting Performance Metrics** (optional, <2% overhead):
+
+- **Cycle Durations**: Measure operation execution time—helps identify slow cycles (typically <5ms for simple operations, <50ms for complex auto_reason steps).
+- **Thought Lengths**: Track verbosity—unusually long thoughts (>500 chars) may indicate excessive detail; very short (<50 chars) may suggest superficial reasoning.
+- **Context Growth**: Monitor retention efficiency—high growth (>0.5 ratio) signals accumulating context; near-zero suggests plateauing insights.
+- **Total Cycles**: Count operations in session—useful for billing, quotas, or detecting runaway auto_reason loops.
+
+Use these values to visualize momentum, adapt UI prompts, trigger client‑side interventions, or optimize reasoning parameters.
 
 ## VS Code / MCP Client Integration
 

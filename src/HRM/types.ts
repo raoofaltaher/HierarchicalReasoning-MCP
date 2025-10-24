@@ -42,6 +42,26 @@ export interface ReasoningMetrics {
 
 export type HaltTrigger = "confidence_convergence" | "plateau" | "max_steps";
 
+export interface PerformanceMetrics {
+  // Cycle durations (milliseconds)
+  totalDuration?: number; // Total operation/auto_reason time
+  cycleDurations: number[]; // Array of individual cycle times
+  avgCycleDuration: number; // Mean cycle duration
+
+  // Thought lengths (characters)
+  hThoughtLengths: number[]; // Array of h_thought lengths
+  lThoughtLengths: number[]; // Array of l_thought lengths
+  avgHThoughtLength: number; // Mean h_thought length
+  avgLThoughtLength: number; // Mean l_thought length
+
+  // Context retention ratio (growth rate)
+  contextGrowthRatios: number[]; // Context size delta per cycle
+  avgContextGrowth: number; // Mean growth ratio
+
+  // Cycle counts
+  totalCycles: number; // Total H+L cycles executed
+}
+
 export interface HierarchicalState {
   sessionId: string;
   hCycle: number;
@@ -65,6 +85,7 @@ export interface HierarchicalState {
   metricHistory: number[];
   plateauCount: number;
   recentLThoughtHashes: string[];
+  performanceMetrics?: PerformanceMetrics; // Optional: timing & thought length tracking
 }
 
 export interface HRMResponseContent {
@@ -92,6 +113,7 @@ export interface HRMResponse {
   diagnostics?: {
     plateau_count: number;
     confidence_window: number[];
+    performance?: PerformanceMetrics; // Optional: performance tracking data
   };
 }
 

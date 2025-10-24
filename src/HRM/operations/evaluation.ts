@@ -1,3 +1,4 @@
+import { performance } from "node:perf_hooks";
 import {
   MAX_PLATEAU_BEFORE_HALT,
   MIN_CONFIDENCE_FOR_COMPLETION,
@@ -8,6 +9,7 @@ import {
 import { computeReasoningMetrics } from "../utils/metrics.js";
 import { log } from "../utils/logging.js";
 import { HaltTrigger, HierarchicalState, HRMParameters, ReasoningMetrics } from "../types.js";
+import { recordCycleDuration } from "../state.js";
 
 // Runtime-adjustable plateau window via environment variable HRM_PLATEAU_WINDOW (2..20)
 const plateauWindow: number = (() => {
@@ -27,6 +29,8 @@ const plateauDelta: number = (() => {
 })();
 
 export const handleEvaluate = (state: HierarchicalState, params: HRMParameters): ReasoningMetrics => {
+  const startTime = performance.now();
+  
   if (typeof params.confidence_score === "number") {
     state.metrics.confidenceScore = params.confidence_score;
   }
@@ -55,6 +59,10 @@ export const handleEvaluate = (state: HierarchicalState, params: HRMParameters):
     state.plateauCount = 0;
   }
 
+  // Performance tracking
+  const duration = performance.now() - startTime;
+  recordCycleDuration(state, duration);
+
   log("info", "Evaluation complete", {
     sessionId: state.sessionId,
     metrics,
@@ -67,6 +75,8 @@ export const handleHaltCheck = (state: HierarchicalState): {
   rationale: string;
   trigger?: HaltTrigger;
 } => {
+  const startTime = performance.now();
+  
   const { confidenceScore, convergenceScore } = state.metrics;
   const confidenceReady = confidenceScore >= MIN_CONFIDENCE_FOR_COMPLETION;
   const convergenceThreshold = state.convergenceThreshold ?? MIN_CONVERGENCE_FOR_COMPLETION;
@@ -84,6 +94,11 @@ export const handleHaltCheck = (state: HierarchicalState): {
     : shouldHalt
       ? "Conditions met for halting"
       : `Continue reasoning: confidence ${confidenceScore.toFixed(2)}, convergence ${convergenceScore.toFixed(2)}`;
+  
+  // Performance tracking
+  const duration = performance.now() - startTime;
+  recordCycleDuration(state, duration);
+  
   log("info", "Halt check evaluated", { sessionId: state.sessionId, shouldHalt, rationale });
   return { shouldHalt, rationale, trigger };
 };

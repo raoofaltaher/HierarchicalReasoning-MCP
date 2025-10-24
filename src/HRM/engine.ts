@@ -3,9 +3,9 @@ import { appendContext, contextToText } from "./utils/text.js";
 import { log, logState } from "./utils/logging.js";
 import { handleCycleProgression, suggestNextOperation } from "./utils/suggestions.js";
 import { handleEvaluate, handleHaltCheck } from "./operations/evaluation.js";
-import { handleHighLevelPlan, handleHighLevelUpdate } from "./operations/highLevel.js";
+import { handleHighLevelPlan, handleHighLevelUpdate } from "./operations/highLevel.ts";
 import { handleLowLevelExecution } from "./operations/lowLevel.js";
-import { SessionManager } from "./state.js";
+import { SessionManager, calculatePerformanceAggregates } from "./state.js";
 import { validateWorkspacePath } from "./utils/security.js";
 import {
   AutoReasoningTraceEntry,
@@ -291,10 +291,19 @@ export class HierarchicalReasoningEngine {
     if (extras.haltTrigger) {
       response.halt_trigger = extras.haltTrigger;
     }
+    
+    // Include diagnostics with optional performance metrics
     response.diagnostics = {
       plateau_count: session.plateauCount ?? 0,
       confidence_window: [...(session.metricHistory ?? [])],
     };
+    
+    // Add performance metrics if available
+    if (session.performanceMetrics) {
+      const aggregatedMetrics = calculatePerformanceAggregates(session.performanceMetrics);
+      response.diagnostics.performance = aggregatedMetrics;
+    }
+    
     return response;
   }
 

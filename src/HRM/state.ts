@@ -1,4 +1,5 @@
 import { randomUUID } from "node:crypto";
+import { performance } from "node:perf_hooks";
 import {
   DEFAULT_COMPLEXITY_ESTIMATE,
   DEFAULT_CONVERGENCE_THRESHOLD,
@@ -10,7 +11,7 @@ import {
   MAX_RECENT_DECISIONS,
   MAX_SESSIONS,
 } from "./constants.js";
-import { HierarchicalState, HRMParameters, HRMOperation } from "./types.js";
+import { HierarchicalState, HRMParameters, HRMOperation, PerformanceMetrics } from "./types.js";
 import { log } from "./utils/logging.js";
 
 /**
@@ -304,4 +305,110 @@ export class SessionManager {
   async getAllSessionIds(): Promise<string[]> {
     return await this.adapter.getAllSessionIds();
   }
+}
+
+// ===========================
+// Performance Metrics Helpers
+// ===========================
+
+/**
+ * Create empty performance metrics structure.
+ * Used for session initialization.
+ */
+export function createEmptyPerformanceMetrics(): PerformanceMetrics {
+  return {
+    cycleDurations: [],
+    avgCycleDuration: 0,
+    hThoughtLengths: [],
+    lThoughtLengths: [],
+    avgHThoughtLength: 0,
+    avgLThoughtLength: 0,
+    contextGrowthRatios: [],
+    avgContextGrowth: 0,
+    totalCycles: 0,
+  };
+}
+
+/**
+ * Record cycle duration for an operation.
+ * 
+ * @param session - The current session state
+ * @param duration - Operation duration in milliseconds
+ */
+export function recordCycleDuration(
+  session: HierarchicalState,
+  duration: number
+): void {
+  if (!session.performanceMetrics) {
+    session.performanceMetrics = createEmptyPerformanceMetrics();
+  }
+  session.performanceMetrics.cycleDurations.push(duration);
+  session.performanceMetrics.totalCycles++;
+}
+
+/**
+ * Record thought length for H or L layer.
+ * 
+ * @param session - The current session state
+ * @param thought - The thought text
+ * @param layer - 'h' for high-level, 'l' for low-level
+ */
+export function recordThoughtLength(
+  session: HierarchicalState,
+  thought: string,
+  layer: "h" | "l"
+): void {
+  if (!session.performanceMetrics) {
+    session.performanceMetrics = createEmptyPerformanceMetrics();
+  }
+  const length = thought.length;
+  if (layer === "h") {
+    session.performanceMetrics.hThoughtLengths.push(length);
+  } else {
+    session.performanceMetrics.lThoughtLengths.push(length);
+  }
+}
+
+/**
+ * Record context growth ratio.
+ * Calculated as: (currentSize - previousSize) / previousSize
+ * Handles edge case where previousSize is 0.
+ * 
+ * @param session - The current session state
+ * @param previousSize - Previous context size (characters)
+ * @param currentSize - Current context size (characters)
+ */
+export function recordContextGrowth(
+  session: HierarchicalState,
+  previousSize: number,
+  currentSize: number
+): void {
+  if (!session.performanceMetrics) {
+    session.performanceMetrics = createEmptyPerformanceMetrics();
+  }
+  const ratio =
+    previousSize > 0 ? (currentSize - previousSize) / previousSize : 0;
+  session.performanceMetrics.contextGrowthRatios.push(ratio);
+}
+
+/**
+ * Calculate aggregate performance metrics (averages).
+ * Safe against division by zero - returns 0 for empty arrays.
+ * 
+ * @param metrics - The performance metrics object
+ * @returns Updated metrics with calculated aggregates
+ */
+export function calculatePerformanceAggregates(
+  metrics: PerformanceMetrics
+): PerformanceMetrics {
+  const safeAvg = (arr: number[]) =>
+    arr.length > 0 ? arr.reduce((sum, val) => sum + val, 0) / arr.length : 0;
+
+  return {
+    ...metrics,
+    avgCycleDuration: safeAvg(metrics.cycleDurations),
+    avgHThoughtLength: safeAvg(metrics.hThoughtLengths),
+    avgLThoughtLength: safeAvg(metrics.lThoughtLengths),
+    avgContextGrowth: safeAvg(metrics.contextGrowthRatios),
+  };
 }
