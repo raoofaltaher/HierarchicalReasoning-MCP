@@ -52,10 +52,17 @@ jobs:
           fi
         continue-on-error: true
 
-      - name: Run tests
+      - name: Run tests with coverage
         if: steps.check-tests.outputs.has-tests == 'true'
         working-directory: src/${{ matrix.package }}
-        run: npm test
+        run: npm run test:coverage
+
+      - name: Upload coverage reports
+        if: steps.check-tests.outputs.has-tests == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ matrix.package }}
+          path: src/${{ matrix.package }}/coverage/
 
   build:
     needs: [detect-packages, test]

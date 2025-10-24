@@ -1,5 +1,9 @@
 # Hierarchical Reasoning MCP Server
 
+![Tests](https://github.com/raoofaltaher/HierarchicalReasoning-MCP/actions/workflows/typescript.yml/badge.svg)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+
 Hierarchical Reasoning MCP (HRM) is a neuroscience‑inspired dual‑layer reasoning engine for the Model Context Protocol. It separates strategic planning (High level) from tactical execution (Low level), adaptively iterates based on heuristic metrics, and provides structured diagnostics for safe autonomous reasoning.
 
 ## ✨ Core Capabilities
@@ -13,7 +17,6 @@ Hierarchical Reasoning MCP (HRM) is a neuroscience‑inspired dual‑layer reaso
 - Session lifecycle with TTL eviction and environment overrides
 - JSON Schema validated inputs (derived automatically from Zod schema)
 - Diagnostics returned on every response: plateau count + confidence window history
- - Diagnostics returned on every response: plateau count + confidence window history
 
 ## Installation
 
