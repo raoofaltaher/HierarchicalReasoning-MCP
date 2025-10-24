@@ -224,6 +224,33 @@ async function runServer() {
   log("info", "Hierarchical Reasoning MCP server running on stdio");
 }
 
+/**
+ * Global error handlers for unhandled rejections and exceptions.
+ * These catch errors that escape normal error handling and prevent silent failures.
+ * Following Node.js best practices from goldbergyoni/nodebestpractices.
+ */
+process.on("unhandledRejection", (reason: unknown) => {
+  log("error", "Unhandled Promise Rejection", {
+    reason: reason instanceof Error ? reason.message : String(reason),
+    stack: reason instanceof Error ? reason.stack : undefined,
+  });
+  // Don't exit on unhandled rejections in MCP server - log and continue
+  // MCP protocol should handle individual request failures gracefully
+});
+
+process.on("uncaughtException", (error: Error) => {
+  log("error", "Uncaught Exception - Fatal", {
+    message: error.message,
+    stack: error.stack,
+    name: error.name,
+  });
+  // Uncaught exceptions indicate serious issues - attempt graceful shutdown
+  // Allow time for logs to flush before exiting
+  setTimeout(() => {
+    process.exit(1);
+  }, 1000);
+});
+
 runServer().catch((error) => {
   log("error", "Fatal error running server", error);
   process.exit(1);
