@@ -11,18 +11,6 @@ class NullDetector extends FrameworkDetector {
   }
 }
 
-export class VueDetector extends NullDetector {
-  constructor() {
-    super("vue");
-  }
-}
-
-export class AngularDetector extends NullDetector {
-  constructor() {
-    super("angular");
-  }
-}
-
 export class FastifyDetector extends NullDetector {
   constructor() {
     super("fastify");

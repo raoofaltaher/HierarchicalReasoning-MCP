@@ -12,14 +12,14 @@ import { NextJSDetector } from "./detectors/nextDetector.js";
 import { ExpressDetector } from "./detectors/expressDetector.js";
 import { PrismaDetector } from "./detectors/prismaDetector.js";
 import { PostgreSQLDetector } from "./detectors/postgresDetector.js";
+import { VueDetector } from "./detectors/vueDetector.js";
+import { AngularDetector } from "./detectors/angularDetector.js";
 import {
-  AngularDetector,
   FastifyDetector,
   MongoDBDetector,
   MySQLDetector,
   NestJSDetector,
   TypeORMDetector,
-  VueDetector,
 } from "./detectors/placeholders.js";
 
 const DEFAULT_THRESHOLD = 0.35;
