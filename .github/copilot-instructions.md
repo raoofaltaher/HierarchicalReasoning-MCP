@@ -9,17 +9,17 @@ globs: *
 
 ## 0. Project Snapshot
 
-| Aspect                  | Status                                                                                             |
-| ----------------------- | -------------------------------------------------------------------------------------------------- |
-| Core Reasoning Loop     | Implemented (H/L cycles, auto mode, structured trace; optional textual trace via env toggle)       |
-| Framework Detection     | React, Next.js (basic), Express, Prisma, PostgreSQL (with placeholders for others)                 |
-| Adaptive Metrics        | Heuristic (density + diversity + candidate strength)                                               |
-| Plateau / Halting Logic | Implemented (confidence + convergence OR plateau; window & delta runtime overridable)              |
-| Semantic / Embeddings   | Not yet (planned Medium/Long term)                                                                 |
-| Persistence             | In-memory only (session map)                                                                       |
-| Tests                   | Expanded Vitest suite (TTL eviction, halt triggers, plateau window/delta, detectors, enrichment)   |
-| Diagnostics             | Exposed (plateau_count, confidence window history) in all responses                                |
-| Docs                    | Actively maintained (instructions + README synced with recent env overrides & diagnostics)         |
+| Aspect                  | Status                                                                                           |
+| ----------------------- | ------------------------------------------------------------------------------------------------ |
+| Core Reasoning Loop     | Implemented (H/L cycles, auto mode, structured trace; optional textual trace via env toggle)     |
+| Framework Detection     | React, Next.js (basic), Express, Prisma, PostgreSQL (with placeholders for others)               |
+| Adaptive Metrics        | Heuristic (density + diversity + candidate strength)                                             |
+| Plateau / Halting Logic | Implemented (confidence + convergence OR plateau; window & delta runtime overridable)            |
+| Semantic / Embeddings   | Not yet (planned Medium/Long term)                                                               |
+| Persistence             | In-memory only (session map)                                                                     |
+| Tests                   | Expanded Vitest suite (TTL eviction, halt triggers, plateau window/delta, detectors, enrichment) |
+| Diagnostics             | Exposed (plateau_count, confidence window history) in all responses                              |
+| Docs                    | Actively maintained (instructions + README synced with recent env overrides & diagnostics)       |
 
 ## 1. Architecture Overview
 
@@ -164,14 +164,14 @@ PR Requirements:
 
 ## 11. Decision Log (Recent)
 
-| Decision                                          | Date    | Rationale                                                                  |
-| ------------------------------------------------- | ------- | ---------------------------------------------------------------------------- |
-| Heuristic coverage metrics only (phase 2)         | Current | Faster bootstrap; avoids premature embedding dependency                      |
-| Plateau halting window base = 3 (overridable)     | Current | Balances noise vs responsiveness; allows tuning via env                      |
-| Plateau delta base = 0.02 (overridable)           | Current | Ensures meaningful progress; tunable for noisy scenarios                     |
-| Confidence threshold default env-overridable      | Current | Allows adaptive convergence criteria per deployment                          |
-| Textual auto trace opt-in via env toggle          | Current | Reduces response verbosity in default mode                                  |
-| Diagnostics always included in responses          | Current | Enables clients to adapt UI/prompts without extra calls                     |
+| Decision                                      | Date    | Rationale                                                |
+| --------------------------------------------- | ------- | -------------------------------------------------------- |
+| Heuristic coverage metrics only (phase 2)     | Current | Faster bootstrap; avoids premature embedding dependency  |
+| Plateau halting window base = 3 (overridable) | Current | Balances noise vs responsiveness; allows tuning via env  |
+| Plateau delta base = 0.02 (overridable)       | Current | Ensures meaningful progress; tunable for noisy scenarios |
+| Confidence threshold default env-overridable  | Current | Allows adaptive convergence criteria per deployment      |
+| Textual auto trace opt-in via env toggle      | Current | Reduces response verbosity in default mode               |
+| Diagnostics always included in responses      | Current | Enables clients to adapt UI/prompts without extra calls  |
 
 ## 12. Future Extensibility Hooks
 
