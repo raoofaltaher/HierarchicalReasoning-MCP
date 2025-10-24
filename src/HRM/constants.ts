@@ -26,6 +26,8 @@ export const INITIAL_METRICS: ReasoningMetrics = {
 
 export const MAX_CONTEXT_LENGTH = 2000;
 export const MAX_THOUGHT_LENGTH = 2000;
+export const MAX_SESSIONS = 1000;
+export const AUTO_REASON_TIMEOUT_MS = 60000; // 60 seconds
 
 export const MIN_CONFIDENCE_FOR_COMPLETION = 0.8;
 export const MIN_CONVERGENCE_FOR_COMPLETION = 0.85;
@@ -53,3 +55,21 @@ export const LAYER_ROLE_DESCRIPTIONS: Record<Exclude<HRMOperation, "auto_reason"
   evaluate: "Evaluation of solution quality and alignment",
   halt_check: "Halting check to decide continuation",
 };
+
+// Security: Blocked sensitive system directories to prevent path traversal attacks
+export const BLOCKED_SYSTEM_PATHS: string[] = [
+  "/etc",
+  "/sys",
+  "/proc",
+  "/dev",
+  "/root",
+  "C:\\Windows",
+  "C:\\Windows\\System32",
+  "C:\\Program Files",
+  "/System",
+  "/Library/System",
+  "/usr/bin",
+  "/usr/sbin",
+  "/sbin",
+  "/bin",
+];

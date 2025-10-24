@@ -1,9 +1,13 @@
 import { appendContext, normalizeThought } from "../utils/text.js";
 import { logState } from "../utils/logging.js";
 import { HierarchicalState, HRMParameters } from "../types.js";
+import { validateThoughtLength } from "../utils/security.js";
+import { MAX_THOUGHT_LENGTH } from "../constants.js";
 
 export const handleLowLevelExecution = (state: HierarchicalState, params: HRMParameters) => {
-  const thought = normalizeThought(params.l_thought);
+  // Security: Validate thought length to prevent resource exhaustion
+  const validatedThought = validateThoughtLength(params.l_thought, MAX_THOUGHT_LENGTH, "l_thought");
+  const thought = normalizeThought(validatedThought);
   const finalThought =
     thought || `Detail exploration for H-cycle ${state.hCycle}, L-cycle ${state.lCycle}`;
 

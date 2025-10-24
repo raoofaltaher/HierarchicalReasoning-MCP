@@ -1,11 +1,30 @@
 {
   "name": "hierarchical-reasoning-mcp",
   "version": "0.1.0",
-  "description": "Hierarchical Reasoning Model MCP server",
+  "description": "Hierarchical Reasoning Model MCP server - neuroscience-inspired dual-layer reasoning engine with adaptive cycles and convergence feedback",
   "license": "MIT",
-  "author": "Hierarchical Reasoning Team",
-  "homepage": "https://modelcontextprotocol.io",
-  "bugs": "https://github.com/modelcontextprotocol/servers/issues",
+  "author": "Raoof Altaher <raoofaltaher@gmail.com>",
+  "homepage": "https://github.com/raoofaltaher/HierarchicalReasoning-MCP#readme",
+  "bugs": "https://github.com/raoofaltaher/HierarchicalReasoning-MCP/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/raoofaltaher/HierarchicalReasoning-MCP.git"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "reasoning",
+    "hierarchical",
+    "ai",
+    "neuroscience",
+    "adaptive",
+    "convergence",
+    "framework-detection",
+    "typescript"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "type": "module",
   "bin": {
     "mcp-server-hierarchical-reasoning": "dist/index.js"

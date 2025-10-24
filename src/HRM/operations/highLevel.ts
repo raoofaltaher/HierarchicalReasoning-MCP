@@ -1,9 +1,13 @@
 import { appendContext, normalizeThought, summaryFromContext } from "../utils/text.js";
 import { logState } from "../utils/logging.js";
 import { HierarchicalState, HRMParameters } from "../types.js";
+import { validateThoughtLength } from "../utils/security.js";
+import { MAX_THOUGHT_LENGTH } from "../constants.js";
 
 export const handleHighLevelPlan = (state: HierarchicalState, params: HRMParameters) => {
-  const thought = normalizeThought(params.h_thought) ||
+  // Security: Validate thought length to prevent resource exhaustion
+  const validatedThought = validateThoughtLength(params.h_thought, MAX_THOUGHT_LENGTH, "h_thought");
+  const thought = normalizeThought(validatedThought) ||
     summaryFromContext(state.lContext, params.problem || "No explicit high-level guidance provided yet.");
 
   state.hContext = appendContext(state.hContext, thought);
@@ -12,7 +16,9 @@ export const handleHighLevelPlan = (state: HierarchicalState, params: HRMParamet
 };
 
 export const handleHighLevelUpdate = (state: HierarchicalState, params: HRMParameters) => {
-  const synthesis = normalizeThought(params.h_thought) ||
+  // Security: Validate thought length to prevent resource exhaustion
+  const validatedThought = validateThoughtLength(params.h_thought, MAX_THOUGHT_LENGTH, "h_thought");
+  const synthesis = normalizeThought(validatedThought) ||
     `Synthesis after cycle ${state.hCycle}: ${summaryFromContext(state.lContext, "No low-level context available")}`;
 
   state.hContext = appendContext(state.hContext, synthesis);
