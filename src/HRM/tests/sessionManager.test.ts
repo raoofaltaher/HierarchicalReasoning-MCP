@@ -13,28 +13,28 @@ describe("SessionManager", () => {
     vi.useRealTimers();
   });
 
-  it("evicts sessions after TTL elapses", () => {
+  it("evicts sessions after TTL elapses", async () => {
     const manager = new SessionManager(1000);
     const params = createParams();
-    const session = manager.getOrCreate(params);
+    const session = await manager.getOrCreate(params);
 
-    expect(manager.getState(session.sessionId)).toBeDefined();
+    expect(await manager.getState(session.sessionId)).toBeDefined();
 
     vi.advanceTimersByTime(1500);
-    manager.sweepExpiredSessions();
+    await manager.sweepExpiredSessions();
 
-    expect(manager.getState(session.sessionId)).toBeUndefined();
+    expect(await manager.getState(session.sessionId)).toBeNull();
   });
 
-  it("reuses active sessions when TTL not exceeded", () => {
+  it("reuses active sessions when TTL not exceeded", async () => {
     const manager = new SessionManager(1000);
     const params = createParams();
-    const session = manager.getOrCreate(params);
+    const session = await manager.getOrCreate(params);
 
     vi.advanceTimersByTime(500);
-    manager.sweepExpiredSessions();
+    await manager.sweepExpiredSessions();
 
-    const reused = manager.getOrCreate(createParams({ session_id: session.sessionId }));
+    const reused = await manager.getOrCreate(createParams({ session_id: session.sessionId }));
     expect(reused.sessionId).toBe(session.sessionId);
     expect(reused).toBe(session);
   });

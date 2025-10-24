@@ -52,7 +52,7 @@ describe("Multi-Framework Workspace Integration", () => {
     expect(response.content.length).toBeGreaterThan(0);
 
     // Get the session to inspect framework insights
-    const session = (engine as any).sessions.getState(response.session_id);
+    const session = await (engine as any).sessions.getState(response.session_id);
     expect(session).toBeDefined();
 
     // Should have framework insight
@@ -165,7 +165,7 @@ describe("Multi-Framework Workspace Integration", () => {
     const response2 = await engine.handleRequest(params2);
 
     // Get session state
-    const session = (engine as any).sessions.getState(sessionId);
+    const session = await (engine as any).sessions.getState(sessionId);
     
     // Framework notes should be accumulated across operations
     expect(session.frameworkNotes).toBeDefined();
@@ -227,7 +227,7 @@ describe("Multi-Framework Workspace Integration", () => {
     expect(response.isError).toBeFalsy();
     expect(response.content).toBeDefined();
     
-    const session = (engine as any).sessions.getState(response.session_id);
+    const session = await (engine as any).sessions.getState(response.session_id);
     
     // Framework insight may be undefined or have empty signatures
     if (session.frameworkInsight) {

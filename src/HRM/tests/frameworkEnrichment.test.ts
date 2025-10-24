@@ -51,7 +51,7 @@ describe("framework enrichment", () => {
 
     expect(response.current_state.h_context).toContain("Highlight A | Highlight B");
 
-    const session = (engine as unknown as { sessions: { getState: (id: string) => any } }).sessions.getState(
+    const session = await (engine as unknown as { sessions: { getState: (id: string) => Promise<any> } }).sessions.getState(
       response.session_id,
     );
     expect(session.frameworkNotes.length).toBe(20);

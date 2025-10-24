@@ -46,10 +46,10 @@ export class HierarchicalReasoningEngine {
       }
     }
 
-    let session = this.sessions.getOrCreate(params);
+    let session = await this.sessions.getOrCreate(params);
     if (params.reset_state) {
       log("info", "Session reset requested", { sessionId: session.sessionId });
-      session = this.sessions.reset(session.sessionId, params);
+      session = await this.sessions.reset(session.sessionId, params);
     }
 
     try {
@@ -60,7 +60,7 @@ export class HierarchicalReasoningEngine {
       }
 
       const { summary, haltTrigger } = this.performOperation(params.operation, params, session);
-      this.sessions.updateState(session, params.operation, summary);
+      await this.sessions.updateState(session, params.operation, summary);
       this.refreshMetrics(session, params.operation);
       const suggestion = suggestNextOperation(session, params.operation);
       return this.buildResponse(session, params.operation, summary, suggestion, {
@@ -87,7 +87,7 @@ export class HierarchicalReasoningEngine {
       );
     }
 
-    let lastOperation: HRMOperation = "h_plan";
+    let lastOperation: HRMOperation | undefined;
     let iterations = 0;
     const startTime = Date.now();
     
@@ -117,7 +117,7 @@ export class HierarchicalReasoningEngine {
         });
         break;
       }
-      const nextOp: HRMOperation = AUTO_REASONING_OPERATIONS.includes(lastOperation)
+      const nextOp: HRMOperation = lastOperation && AUTO_REASONING_OPERATIONS.includes(lastOperation)
         ? suggestNextOperation(session, lastOperation)
         : "h_plan";
 
@@ -140,7 +140,7 @@ export class HierarchicalReasoningEngine {
       }
 
       const { summary, haltTrigger: opHaltTrigger } = this.performOperation(nextOp, params, session);
-      this.sessions.updateState(session, nextOp, summary);
+      await this.sessions.updateState(session, nextOp, summary);
       this.refreshMetrics(session, nextOp);
       pushTrace({
         operation: nextOp,

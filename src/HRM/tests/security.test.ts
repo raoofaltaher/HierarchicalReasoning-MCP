@@ -125,12 +125,12 @@ describe("security", () => {
       }
 
       // Verify we have 5 sessions
-      const sessionsBefore = (engine as unknown as { sessions: { size: () => number } }).sessions.size();
+      const sessionsBefore = await (engine as unknown as { sessions: { size: () => Promise<number> } }).sessions.size();
       expect(sessionsBefore).toBe(5);
 
       // Get all session IDs
-      const allSessionIds = (engine as unknown as { 
-        sessions: { getAllSessionIds: () => string[] } 
+      const allSessionIds = await (engine as unknown as { 
+        sessions: { getAllSessionIds: () => Promise<string[]> } 
       }).sessions.getAllSessionIds();
       
       // Verify all created sessions exist
