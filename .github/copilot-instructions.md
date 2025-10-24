@@ -1,6 +1,5 @@
 ---
 description: AI rules derived by SpecStory from the project AI interaction history
-globs: *
 ---
 
 # GitHub Copilot Project Instructions (Hierarchical Reasoning MCP)

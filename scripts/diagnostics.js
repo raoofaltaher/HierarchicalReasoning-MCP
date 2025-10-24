@@ -185,7 +185,7 @@ const metricsTable = new Table({
   head: [chalk.white("Metric"), chalk.white("Value"), chalk.white("Status")],
 });
 
-const getMetricStatus = (value: number, threshold: number) => {
+const getMetricStatus = (value, threshold) => {
   if (value >= threshold) return chalk.green("✓ Good");
   if (value >= threshold * 0.8) return chalk.yellow("⚠ Fair");
   return chalk.red("✗ Low");
@@ -257,7 +257,7 @@ if (
     head: [chalk.white("Framework"), chalk.white("Confidence")],
   });
 
-  mockSession.frameworkInsight.signatures.forEach((sig: any) => {
+  mockSession.frameworkInsight.signatures.forEach((sig) => {
     const confidence = (sig.confidence * 100).toFixed(0);
     const confidenceColor =
       sig.confidence >= 0.8
@@ -273,7 +273,7 @@ if (
   if (mockSession.frameworkInsight.reasoningHighlights.length > 0) {
     console.log(chalk.dim("Reasoning Highlights:"));
     mockSession.frameworkInsight.reasoningHighlights.forEach(
-      (highlight: string) => {
+      (highlight) => {
         console.log(chalk.gray("  •"), chalk.white(highlight));
       }
     );

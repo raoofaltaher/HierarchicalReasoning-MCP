@@ -25,18 +25,21 @@ Hierarchical Reasoning MCP (HRM) is a neuroscience‑inspired dual‑layer reaso
 HRM implements a two-layer reasoning architecture inspired by neuroscience and cognitive frameworks:
 
 **High-Level (H) Layer**: Strategic planning and synthesis
+
 - Aggregates insights from multiple low-level cycles
 - Maintains broad context and goal alignment
 - Generates strategic decisions and direction
 - Stored in `h_context` field
 
 **Low-Level (L) Layer**: Tactical execution and detail exploration
+
 - Decomposes problems into actionable steps
 - Explores implementation details and edge cases
 - Generates concrete solutions and candidates
 - Stored in `l_context` field
 
 **Multi-Cycle Workflow**:
+
 1. H-layer plans strategic approach (`h_plan`)
 2. L-layer executes tactical steps (`l_execute`, up to `max_l_cycles_per_h` iterations)
 3. H-layer synthesizes L-layer findings (`h_update`)
@@ -49,6 +52,7 @@ This separation allows focused attention at each level while maintaining coheren
 ### Convergence & Plateau Detection
 
 **Convergence Metrics** (heuristic composite):
+
 - **High-level coverage**: Breadth of H-context (0-35% weight)
 - **Low-level depth**: Detail richness in L-context (0-35% weight)
 - **Candidate strength**: Quality of solution candidates (0-20% weight)
@@ -69,6 +73,7 @@ Combined score ranges 0.0–1.0. Higher values indicate more complete reasoning.
    - Tunable via `HRM_PLATEAU_WINDOW` (2–20) and `HRM_PLATEAU_DELTA` (0.001–0.1)
 
 **Diagnostics** returned on every response:
+
 ```json
 {
   "diagnostics": {
@@ -85,6 +90,7 @@ Use these to monitor reasoning momentum and adjust thresholds if needed.
 When `workspace_path` is provided, HRM automatically detects frameworks and enriches reasoning with domain-specific patterns.
 
 **Detection Pipeline**:
+
 1. **Package Analysis**: Parse `package.json` (dependencies, devDependencies)
 2. **Workspace Analysis**: Scan file structure, identify common patterns
 3. **Code Pattern Analysis**: Detect framework-specific code signatures (optional, default: enabled)
@@ -92,6 +98,7 @@ When `workspace_path` is provided, HRM automatically detects frameworks and enri
 5. **Pattern Injection**: Enrich H/L contexts with top 6 recommended patterns
 
 **Supported Frameworks** (confidence threshold: 0.35):
+
 - **React**: Component model, hooks, JSX patterns
 - **Next.js**: App/Pages router, SSR/SSG, API routes
 - **Vue.js**: Composition API, SFC patterns, reactivity
@@ -102,6 +109,7 @@ When `workspace_path` is provided, HRM automatically detects frameworks and enri
 - **PostgreSQL**: Query optimization, indexing strategies
 
 **Placeholder Detectors** (low confidence, future enhancement):
+
 - Fastify, MongoDB, MySQL, TypeORM
 
 Framework detection is transparent—diagnostics show which frameworks were detected and their confidence scores.
@@ -284,23 +292,27 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 
 **Purpose**: Strategic planning and goal framing at the high level.
 
-**When to use**: 
+**When to use**:
+
 - Starting a new reasoning session
 - Defining overall strategy or approach
 - Setting direction after completing low-level exploration
 
 **Key inputs**:
+
 - `operation`: `"h_plan"`
 - `h_thought`: Strategic insight or planning statement
 - `problem`: Problem statement or goal (recommended)
 - `session_id`: UUID for session continuity (optional)
 
 **Returns**:
+
 - `content`: Confirmation of planning step
 - `h_context`: Updated high-level context
 - `diagnostics`: Plateau count and confidence window
 
 **Example**:
+
 ```json
 {
   "operation": "h_plan",
@@ -311,6 +323,7 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 ```
 
 **Response excerpt**:
+
 ```json
 {
   "content": "High-level plan recorded...",
@@ -326,23 +339,27 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 **Purpose**: Tactical execution and detailed exploration at the low level.
 
 **When to use**:
+
 - After `h_plan` to explore implementation details
 - Decomposing tasks into concrete steps
 - Generating solution candidates
 
 **Key inputs**:
+
 - `operation`: `"l_execute"`
 - `l_thought`: Tactical step or implementation detail
 - `l_cycle`: Current low-level cycle index (auto-incremented)
 - `session_id`: UUID for session continuity
 
 **Returns**:
+
 - `content`: Confirmation of execution step
 - `l_context`: Updated low-level context
 - `l_cycle`: Incremented cycle counter
 - `diagnostics`: Plateau count and confidence window
 
 **Example**:
+
 ```json
 {
   "operation": "l_execute",
@@ -361,23 +378,27 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 **Purpose**: Synthesize findings from low-level cycles back into high-level strategy.
 
 **When to use**:
+
 - After completing multiple `l_execute` cycles
 - Aggregating tactical insights into strategic understanding
 - Before running `evaluate` to assess convergence
 
 **Key inputs**:
+
 - `operation`: `"h_update"`
 - `h_thought`: Synthesis or aggregation insight
 - `h_cycle`: Current high-level cycle index
 - `session_id`: UUID for session continuity
 
 **Returns**:
+
 - `content`: Confirmation of synthesis
 - `h_context`: Updated with synthesis
 - `h_cycle`: Incremented cycle counter
 - `diagnostics`: Plateau count and confidence window
 
 **Example**:
+
 ```json
 {
   "operation": "h_update",
@@ -394,16 +415,19 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 **Purpose**: Assess reasoning progress using convergence metrics.
 
 **When to use**:
+
 - After `h_update` to measure completeness
 - Before `halt_check` to inform stopping decision
 - Periodically during long reasoning sessions
 
 **Key inputs**:
+
 - `operation`: `"evaluate"`
 - `solution_candidates`: Array of candidate solutions (optional, influences scoring)
 - `session_id`: UUID for session continuity
 
 **Returns**:
+
 - `content`: Evaluation summary
 - `confidence_score`: Composite confidence (0–1)
 - `convergence_score`: Heuristic convergence metric (0–1)
@@ -411,6 +435,7 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 - `diagnostics`: **Updated confidence window** for plateau detection
 
 **Example**:
+
 ```json
 {
   "operation": "evaluate",
@@ -420,6 +445,7 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 ```
 
 **Response excerpt**:
+
 ```json
 {
   "content": "Evaluation complete...",
@@ -440,23 +466,27 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 **Purpose**: Determine whether reasoning should continue or terminate.
 
 **When to use**:
+
 - After `evaluate` to decide on continuation
 - Manual check during interactive reasoning
 - Before committing to a solution
 
 **Key inputs**:
+
 - `operation`: `"halt_check"`
 - `confidence_score`: Current confidence (from `evaluate`)
 - `convergence_threshold`: Optional override (0.5–0.99)
 - `session_id`: UUID for session continuity
 
 **Returns**:
+
 - `content`: Halt decision explanation
 - `should_halt`: Boolean decision
 - `halt_trigger`: Reason if halting (`"confidence_convergence"`, `"plateau"`, or `null`)
 - `diagnostics`: Plateau count and confidence window
 
 **Example**:
+
 ```json
 {
   "operation": "halt_check",
@@ -467,6 +497,7 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 ```
 
 **Response excerpt** (halting):
+
 ```json
 {
   "content": "Confidence (0.82) and convergence (0.87) exceed thresholds. Halting.",
@@ -477,6 +508,7 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 ```
 
 **Response excerpt** (continuing):
+
 ```json
 {
   "content": "Convergence below threshold. Continue reasoning.",
@@ -493,11 +525,13 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 **Purpose**: Fully autonomous reasoning loop with automatic halting.
 
 **When to use**:
+
 - Complex problems requiring multiple cycles
 - When you want structured trace of reasoning steps
 - Delegating multi-step problem-solving to the server
 
 **Key inputs**:
+
 - `operation`: `"auto_reason"`
 - `problem`: Problem statement or goal (required)
 - `workspace_path`: Path for framework detection (optional)
@@ -507,6 +541,7 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 - `session_id`: UUID for session continuity (optional, auto-generated if omitted)
 
 **Returns**:
+
 - `content`: Summary of reasoning process
 - `trace`: Structured array of reasoning steps (operation, cycles, metrics)
 - `halt_trigger`: Termination reason (`"confidence_convergence"`, `"plateau"`, `"max_steps"`)
@@ -516,6 +551,7 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 - `diagnostics`: Final plateau count and confidence window
 
 **Trace structure**:
+
 ```typescript
 {
   operation: string;      // e.g., "h_plan", "l_execute"
@@ -528,6 +564,7 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 ```
 
 **Example**:
+
 ```json
 {
   "operation": "auto_reason",
@@ -540,6 +577,7 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 ```
 
 **Response excerpt**:
+
 ```json
 {
   "content": "Auto reasoning complete. Halted via confidence_convergence.",
@@ -564,6 +602,7 @@ HRM exposes a single MCP tool (`hierarchicalreasoning`) with six operations. Eac
 
 **Framework enrichment** (when `workspace_path` provided):
 If React is detected, reasoning contexts will include React-specific patterns:
+
 - "Use hooks for state management"
 - "Memoize expensive components with React.memo"
 - "Test with React Testing Library"
@@ -622,11 +661,13 @@ When `workspace_path` is provided to any operation, HRM automatically analyzes t
 | **PostgreSQL** | 0.35 | `pg` or `postgres` dep (0.5), SQL files (0.25), connection patterns (0.25) | Query optimization, Indexing, Transactions |
 
 **Placeholder Detectors** (low implementation, future enhancement):
+
 - Fastify, MongoDB, MySQL, TypeORM
 
 ### Confidence Scoring Example
 
 **React Detection**:
+
 ```typescript
 // Indicators (from reactDetector.ts)
 {
@@ -653,6 +694,7 @@ When `workspace_path` is provided to any operation, HRM automatically analyzes t
 Detected frameworks contribute **recommended patterns** injected into reasoning contexts.
 
 **React Pattern Example**:
+
 ```typescript
 {
   name: "Hook-based State Management",
@@ -663,6 +705,7 @@ Detected frameworks contribute **recommended patterns** injected into reasoning 
 ```
 
 **NestJS Pattern Example**:
+
 ```typescript
 {
   name: "Controller-Service Pattern",
@@ -676,6 +719,7 @@ Detected frameworks contribute **recommended patterns** injected into reasoning 
 ```
 
 **Injection mechanism**:
+
 - Top 6 patterns (across all detected frameworks) are selected
 - Patterns are deduplicated by name
 - Injected as bullet points in `h_context`: "Framework guidance: ..."
@@ -694,9 +738,10 @@ This tutorial demonstrates hierarchical reasoning applied to designing a real-ti
 
 **Scenario**: Design a React dashboard that displays real-time stock prices with WebSocket updates.
 
-**Step 1: Initial Planning with Framework Detection**
+#### Step 1: Initial Planning with Framework Detection
 
 *Request*:
+
 ```json
 {
   "operation": "auto_reason",
@@ -709,6 +754,7 @@ This tutorial demonstrates hierarchical reasoning applied to designing a real-ti
 ```
 
 **Framework Detection** (automatic):
+
 - Detects React (confidence: 0.85) via `react` dependency and `src/components/` folder
 - Injects React patterns:
   - "Hook-based State Management: Prefer useReducer for complex state"
@@ -716,6 +762,7 @@ This tutorial demonstrates hierarchical reasoning applied to designing a real-ti
   - "Context Segmentation: Split context providers to minimize re-renders"
 
 *Response excerpt*:
+
 ```json
 {
   "content": "Auto reasoning complete. Halted via confidence_convergence.",
@@ -769,14 +816,16 @@ This tutorial demonstrates hierarchical reasoning applied to designing a real-ti
 ```
 
 **Interpretation**:
+
 - **Trace**: 5 steps (plan → 2 executes → update → evaluate)
 - **Halt trigger**: `confidence_convergence` (healthy completion)
 - **Diagnostics**: `confidence_window` shows steady improvement (0.70 → 0.82)
 - **Framework enrichment**: React patterns influenced design (useReducer, React.memo mentioned in contexts)
 
-**Step 2: Refining State Management**
+#### Step 2: Refining State Management
 
 *Follow-up request* (manual operation for deeper exploration):
+
 ```json
 {
   "operation": "l_execute",
@@ -787,6 +836,7 @@ This tutorial demonstrates hierarchical reasoning applied to designing a real-ti
 ```
 
 *Response*:
+
 ```json
 {
   "content": "Low-level execution step recorded.",
@@ -800,6 +850,7 @@ This tutorial demonstrates hierarchical reasoning applied to designing a real-ti
 ```
 
 **Key Takeaways**:
+
 - Framework detection automatically enriched reasoning with React-specific guidance
 - `auto_reason` provided structured trace showing reasoning flow
 - Diagnostics confirmed healthy convergence (no plateau)
@@ -813,9 +864,10 @@ This tutorial shows how to diagnose and resolve plateau halting using diagnostic
 
 **Scenario**: Auto reasoning halts prematurely via plateau trigger.
 
-**Step 1: Initial Run (Plateaus)**
+#### Step 1: Initial Run (Plateaus)
 
 *Request*:
+
 ```json
 {
   "operation": "auto_reason",
@@ -826,6 +878,7 @@ This tutorial shows how to diagnose and resolve plateau halting using diagnostic
 ```
 
 *Response*:
+
 ```json
 {
   "content": "Auto reasoning complete. Halted via plateau.",
@@ -876,6 +929,7 @@ This tutorial shows how to diagnose and resolve plateau halting using diagnostic
 ```
 
 **Diagnosis**:
+
 - **`halt_trigger`**: `"plateau"` (stagnation detected)
 - **`confidence_window`**: `[0.65, 0.66, 0.66]` (minimal improvement: 0.01)
 - **`plateau_count`**: 2 (consecutive plateau confirmations)
@@ -883,9 +937,10 @@ This tutorial shows how to diagnose and resolve plateau halting using diagnostic
 
 **Solution**: Lower plateau delta to accept smaller improvements.
 
-**Step 2: Retry with Tuned Parameters**
+#### Step 2: Retry with Tuned Parameters
 
 *Updated request*:
+
 ```json
 {
   "operation": "auto_reason",
@@ -897,6 +952,7 @@ This tutorial shows how to diagnose and resolve plateau halting using diagnostic
 ```
 
 *Server configuration* (add to MCP config):
+
 ```json
 {
   "env": {
@@ -907,6 +963,7 @@ This tutorial shows how to diagnose and resolve plateau halting using diagnostic
 ```
 
 *Response*:
+
 ```json
 {
   "content": "Auto reasoning complete. Halted via confidence_convergence.",
@@ -930,12 +987,14 @@ This tutorial shows how to diagnose and resolve plateau halting using diagnostic
 ```
 
 **Result**:
+
 - **`halt_trigger`**: `confidence_convergence` (success!)
 - **`confidence_window`**: Shows gradual improvement accepted by lower delta
 - **Longer window** (5) smoothed out early noise
 - **Final confidence**: 0.81 (above 0.80 threshold)
 
 **Key Takeaways**:
+
 - Monitor `halt_trigger` to identify premature plateau halting
 - Use `confidence_window` to see improvement trajectory
 - Tune `HRM_PLATEAU_DELTA` for fine-grained vs coarse-grained progress
@@ -949,6 +1008,7 @@ This tutorial shows how to diagnose and resolve plateau halting using diagnostic
 **Scenario**: Aggregate and analyze HRM logs in production environment.
 
 **Server configuration**:
+
 ```json
 {
   "env": {
@@ -959,6 +1019,7 @@ This tutorial shows how to diagnose and resolve plateau halting using diagnostic
 ```
 
 **Sample log stream**:
+
 ```json
 {"timestamp":"2025-10-24T14:22:10.123Z","level":"info","message":"Auto reasoning started","context":{"session_id":"550e8400-e29b-41d4-a716-446655440000","problem":"Design API rate limiting"}}
 {"timestamp":"2025-10-24T14:22:10.245Z","level":"info","message":"Framework detection complete","context":{"frameworks":["Express"],"confidence":{"Express":0.92}}}
@@ -969,33 +1030,51 @@ This tutorial shows how to diagnose and resolve plateau halting using diagnostic
 ```
 
 **Parsing with jq** (filter for evaluations):
+
 ```bash
 cat hrm.log | grep evaluation | jq '{time: .timestamp, confidence: .context.confidence, convergence: .context.convergence}'
 ```
 
 **Output**:
+
 ```json
 {"time":"2025-10-24T14:22:11.456Z","confidence":0.75,"convergence":0.70}
 {"time":"2025-10-24T14:22:15.012Z","confidence":0.82,"convergence":0.88}
 ```
 
 **Aggregation queries** (Splunk/CloudWatch):
-```
+
+```spl
 # Average reasoning cycles to convergence
-source="hrm.log" "halt_trigger"="confidence_convergence" 
+source="hrm.log" "halt_trigger"="confidence_convergence"
 | stats avg(context.h_cycle) as avg_cycles
 
 # Plateau rate (percentage of sessions halting via plateau)
-source="hrm.log" "halt_trigger" 
-| stats count by context.halt_trigger 
+source="hrm.log" "halt_trigger"
+| stats count by context.halt_trigger
+| eval plateau_rate=round((plateau/total)*100, 2)
+```
+```
+
+**Aggregation queries** (Splunk/CloudWatch):
+
+```
+# Average reasoning cycles to convergence
+source="hrm.log" "halt_trigger"="confidence_convergence"
+| stats avg(context.h_cycle) as avg_cycles
+
+# Plateau rate (percentage of sessions halting via plateau)
+source="hrm.log" "halt_trigger"
+| stats count by context.halt_trigger
 | eval plateau_rate=round((plateau/total)*100, 2)
 
 # Framework detection success rate
-source="hrm.log" "Framework detection complete" 
+source="hrm.log" "Framework detection complete"
 | stats count by context.frameworks
 ```
 
 **Key Takeaways**:
+
 - JSON logs enable programmatic analysis and alerting
 - Structured `context` field contains rich debugging information
 - ISO 8601 timestamps simplify time-series analysis
@@ -1029,13 +1108,15 @@ HRM supports two log output formats controlled by `HRM_LOG_FORMAT` environment v
 #### Text Format (Default)
 
 Human-readable colored output to stderr:
-```
+
+```text
 [HRM] INFO: High-level plan recorded
 [HRM] WARN: Convergence below threshold
 [HRM] ERROR: Invalid session ID format
 ```
 
 Colors:
+
 - `INFO`: Cyan
 - `WARN`: Yellow
 - `ERROR`: Red
@@ -1044,12 +1125,14 @@ Colors:
 #### JSON Format
 
 Structured single-line JSON for log aggregation and parsing:
+
 ```json
 {"timestamp":"2025-10-24T10:30:45.123Z","level":"info","message":"High-level plan recorded","context":{"session_id":"550e8400-e29b-41d4-a716-446655440000","operation":"h_plan"}}
 {"timestamp":"2025-10-24T10:30:46.456Z","level":"warn","message":"Convergence below threshold","context":{"convergence":0.65,"threshold":0.85}}
 ```
 
 **Fields**:
+
 - `timestamp`: ISO 8601 format (UTC)
 - `level`: `"info"` | `"warn"` | `"error"` | `"debug"`
 - `message`: Log message text
@@ -1058,6 +1141,7 @@ Structured single-line JSON for log aggregation and parsing:
 **Circular reference handling**: If `context` contains circular references, JSON serialization falls back to `String(context)` and adds `"serializationError": true`.
 
 **Enable JSON logging**:
+
 ```json
 {
   "mcpServers": {
@@ -1071,10 +1155,11 @@ Structured single-line JSON for log aggregation and parsing:
 ```
 
 **Use cases**:
+
 - **Text format**: Local development, debugging, human inspection
 - **JSON format**: Production, log aggregation (Datadog, Splunk, CloudWatch), automated parsing
 
-### Diagnostics
+### Response Diagnostics
 
 Every HRM response includes a `diagnostics` object for observability:
 
@@ -1109,6 +1194,7 @@ Every HRM response includes a `diagnostics` object for observability:
 - **`confidence_window` rising**: Healthy progress. Continue reasoning.
 
 **Example tuning workflow**:
+
 1. Run `auto_reason` with default settings
 2. Check `halt_trigger` in response:
    - If `"plateau"` and reasoning seems incomplete → increase `HRM_PLATEAU_WINDOW` or decrease `HRM_PLATEAU_DELTA`
@@ -1169,6 +1255,7 @@ Plateau detection prevents infinite loops when reasoning stagnates. Tune these p
 ```
 
 **Monitoring plateau behavior**:
+
 - Track `plateau_count` across multiple requests
 - If frequently halting via `"plateau"` trigger → tune window/delta
 - If never halting via `"plateau"` → parameters may be too lenient
@@ -1187,6 +1274,7 @@ Enable verbose logging with `HRM_DEBUG=true`:
 ```
 
 **Debug logs include**:
+
 - Framework detection results (confidence scores, matched indicators)
 - Session lifecycle events (creation, eviction, TTL)
 - Metrics calculation details (coverage, depth, diversity)
@@ -1196,7 +1284,7 @@ Enable verbose logging with `HRM_DEBUG=true`:
 
 ---
 
-### Environment Variable Overrides
+### Runtime Environment Variables
 
 Implemented:
 
@@ -1244,12 +1332,12 @@ This repository is used to develop a new experimental MCP server implementation 
 
 ```bibtex
 @misc{wang2025hierarchicalreasoningmodel,
-      title={Hierarchical Reasoning Model}, 
+      title={Hierarchical Reasoning Model},
       author={Guan Wang and Jin Li and Yuhao Sun and Xing Chen and Changling Liu and Yue Wu and Meng Lu and Sen Song and Yasin Abbasi Yadkori},
       year={2025},
       eprint={2506.21734},
       archivePrefix={arXiv},
       primaryClass={cs.AI},
-      url={https://arxiv.org/abs/2506.21734}, 
+      url={https://arxiv.org/abs/2506.21734},
 }
 ```
