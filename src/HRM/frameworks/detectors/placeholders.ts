@@ -17,12 +17,6 @@ export class FastifyDetector extends NullDetector {
   }
 }
 
-export class NestJSDetector extends NullDetector {
-  constructor() {
-    super("nestjs");
-  }
-}
-
 export class MongoDBDetector extends NullDetector {
   constructor() {
     super("mongodb");

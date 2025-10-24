@@ -14,11 +14,11 @@ import { PrismaDetector } from "./detectors/prismaDetector.js";
 import { PostgreSQLDetector } from "./detectors/postgresDetector.js";
 import { VueDetector } from "./detectors/vueDetector.js";
 import { AngularDetector } from "./detectors/angularDetector.js";
+import { NestJSDetector } from "./detectors/nestDetector.js";
 import {
   FastifyDetector,
   MongoDBDetector,
   MySQLDetector,
-  NestJSDetector,
   TypeORMDetector,
 } from "./detectors/placeholders.js";
 
